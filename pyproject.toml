@@ -1,0 +1,15 @@
+[project]
+name = "pymc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "base36==0.1.1",
+    "imgui==2.0.0",
+    "nbtlib==2.0.4",
+    "numpy==2.3.5",
+    "pygame==2.6.1",
+    "pyglm==2.8.3",
+    "pyopengl==3.1.10",
+]

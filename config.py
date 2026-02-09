@@ -1,0 +1,30 @@
+import glm
+import numpy as np
+
+# 窗口配置
+WINDOW_RES = (480, 320)
+
+
+# 控制配置
+MOVE_SPEED = 0.01
+MOUSE_SENSITIVITY = 0.05
+PITCH_MAX = 89
+
+# 相机配置
+NEAR_CULL = 0.1
+FAR_CULL = 2000.0
+FOV_DEG = 50
+V_FOV = glm.radians(FOV_DEG)  # vertical FOV
+HOME_POS = glm.vec3(10, 2, 10)
+#HOME_POS = glm.vec3(0, 100, 10)
+
+
+#Chunk配置
+CHUNK_WIDHT = 16
+CHUNK_HEIGHT = 128
+CHUNK_LENGHTH = 16
+
+
+SUBCHUNK_WIDTH = 4
+SUBCHUNK_HEIGHT = 4
+SUBCHUNK_LENGTH = 4
