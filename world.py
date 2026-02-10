@@ -36,6 +36,13 @@ class World:
         self.build_meshs()
         logger.info(f"end build meshs...")
         
+        
+    def reset_map(self):
+        logger.info(f"reset map")
+        
+        self.map_data.reset_map_data()
+        self.build_meshs()
+        
 
         
     def _load_block_type(self):

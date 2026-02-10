@@ -3,6 +3,7 @@ import chunk
 import config
 import base36
 import logging
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ class MapData:
     def __init__(self, world, path="save"):
         self.world = world
         self.path = path
+        self.original_chunks = {}
         
         
     def load(self, path=""):
@@ -24,12 +26,17 @@ class MapData:
         
     def build_custom_chunks(self):
         position = (0,0,0)
-        self.world.chunks[position] = chunk.Chunk(self.world, position)
-        new_chunk = self.world.chunks[position]
+        new_chunk = chunk.Chunk(self.world, position)
+        self.world.chunks[position] = new_chunk
         
         for x in range(config.CHUNK_WIDHT):
             for z in range(config.CHUNK_LENGHTH):
                 new_chunk.blocks[x][0][z] = 2
+
+        
+    def reset_map_data(self):
+        self.world.chunks = {}
+        self.build_custom_chunks()
     
     
     def save(self, path=""):

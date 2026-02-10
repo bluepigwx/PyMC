@@ -132,6 +132,8 @@ class Controller:
             self._position = config.HOME_POS
         if key == pg.K_j:
             self._plugin._handle_get_scene_info()
+        if key == pg.K_r:
+            self._world.reset_map()
 
 
     def update(self, delta):

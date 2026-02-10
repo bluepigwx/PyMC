@@ -163,15 +163,16 @@ class Plugin:
             logger.error(f"no valible socket to use")
             return
         
-        cmd_type = command.get("type")
+        cmd_type = command.get("cmd")
         cmd_params = command.get("params", {})
+        task_id = command.get("task_id", 0)
         
         handler = hadlers.get(cmd_type)
         if handler:
             try:
                 result = handler(cmd_params)
                 try:
-                    response_json = json.dumps({"retcode":"success", "result":result})
+                    response_json = json.dumps({"retcode":"success", "task_id":task_id, "result":result})
                     self.socket.sendall(response_json.encode("utf-8"))
                 except Exception as e:
                     logger.error(f"send data error {e}")
