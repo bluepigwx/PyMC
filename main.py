@@ -5,14 +5,12 @@ import shader
 import camera
 import controller
 import world
-import hit
-import math
-import glm
 import logging
 import plugin
+import agent_plugin
 
 logging.basicConfig(level=logging.DEBUG,
-                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    format="[%(asctime)s][%(filename)s:%(funcName)s:%(lineno)d][%(levelname)s][%(message)s]",
                     handlers=[
                         logging.StreamHandler()
                     ])
@@ -60,6 +58,9 @@ class Application:
         self._plugin = plugin.Plugin(self._world, self._controller)
         self._plugin.init()
         
+        self._agent_plugin = agent_plugin.AgentPlugin(self._world, self._controller)
+        self._agent_plugin.init()
+        
         self._controller.bind_plugin(self._plugin)
         
         
@@ -86,6 +87,9 @@ class Application:
 
     def _update(self, delta):
         self._plugin.update()
+        
+        self._agent_plugin.update()
+        
         self._controller.update(delta)
 
 
@@ -113,6 +117,9 @@ class Application:
         
         if self._plugin:
             self._plugin.finit()
+            
+        if self._agent_plugin:
+            self._agent_plugin.finit()
         
         pg.quit()
 

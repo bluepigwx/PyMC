@@ -9,9 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 _host = "localhost"
-_port = 9987
+_port = 9988
 
-class Plugin:
+class AgentPlugin:
+    """
+    维护AIAgent网关连接
+    """
     def __init__(self, world, controller):
         self.socket = None
         
@@ -23,7 +26,7 @@ class Plugin:
         self.world = world
         self.controller = controller
         
-        self.enable = False
+        self.enable = True
         
     
     def init(self):
@@ -62,7 +65,6 @@ class Plugin:
             
         logger.info(f"create receiv threading success")
             
-            
         
     def _receiv(self):
         self.socket.settimeout(None)
@@ -88,7 +90,6 @@ class Plugin:
             pass
         
         
-        
     def finit(self):
         if not self.enable:
             return
@@ -101,7 +102,6 @@ class Plugin:
             finally:
                 self.socket = None
                 
-    
     
     def update(self):
         """
@@ -127,11 +127,9 @@ class Plugin:
             cnt += 1
                 
     
-    
     def _handle_hello(self, params):
         logger.info(f"handle hello message {params}")
         
-    
     
     def _handle_get_scene_info(self, params={}):
         logger.info(f"_handle_get_scene_info")
@@ -151,7 +149,6 @@ class Plugin:
         
         #logger.debug(f"get scene info :{scene_info}")
         return scene_info
-    
     
     
     def _handle_set_blocks(self, params):
