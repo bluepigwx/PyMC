@@ -8,7 +8,12 @@ import websocket
 logger = logging.getLogger(__name__)
 
 
+from cmd_builder import build_request, build_response
+
 _ws_url = "ws://localhost:8000/ws"
+
+
+
 
 
 class AgentPlugin:
@@ -145,7 +150,7 @@ class AgentPlugin:
             return
 
         try:
-            message = json.dumps({"cmd": "chat", "params": {"message": text}})
+            message = json.dumps(build_request("chat", {"message": text}))
             self._ws.send(message)
         except Exception as e:
             logger.error(f"send chat error: {e}")
@@ -181,15 +186,15 @@ class AgentPlugin:
         logger.info(f"handle hello message {params}")
 
 
-    def _handle_get_scene_info(self, params={}):
-        logger.info(f"_handle_get_scene_info")
+    def _handle_get_scene_info(self, params):
+        logger.info("_handle_get_scene_info")
 
         scene_info = {
             "camera": {},
             "blocks": [],
         }
 
-        camerainfo = scene_info.get("camera")
+        camerainfo = scene_info["camera"]
         camerainfo["pos"] = list(self.controller._position)
         camerainfo["forward"] = list(self.controller._forward)
         camerainfo["up"] = list(self.controller._up)
@@ -197,11 +202,11 @@ class AgentPlugin:
 
         scene_info["blocks"] = self.world.get_all_blocks()
 
-        return scene_info
+        self._send_json(build_response("get_scene_info", "ok", {"scene_info": scene_info}))
 
 
     def _handle_set_blocks(self, params):
-        logger.info(f"_handle_set_block params: {params}")
+        logger.info(f"_handle_set_blocks params: {params}")
 
         for block in params["blocks"]:
             block_type = block["type"]
@@ -211,10 +216,15 @@ class AgentPlugin:
 
             self.world.set_block((wx, wy, wz), block_type)
 
-        return "ok"
+        self._send_json(build_response("set_blocks", "ok", {"count": len(params.get("blocks", []))}))
 
 
     def process_cmd(self, command):
+        """处理服务端发来的消息。
+
+        消息格式（与服务端 cmd_dispatch 对齐）:
+            {"cmd": "xxx", "status": "ok|error", "params": {...}}
+        """
         handlers = {
             "connected": self._handle_connected,
             "chat": self._handle_chat_reply,
@@ -229,32 +239,16 @@ class AgentPlugin:
 
         cmd_type = command.get("cmd")
         cmd_params = command.get("params", {})
-        cmd_status = command.get("status")
-        task_id = command.get("task_id", 0)
 
-        # 服务端返回的响应消息（有 status 字段），直接分发不回复
-        if cmd_status is not None:
-            handler = handlers.get(cmd_type)
-            if handler:
-                try:
-                    handler(cmd_params)
-                except Exception as e:
-                    logger.error(f"handle response error [{cmd_type}]: {e}")
-            else:
-                logger.warning(f"unhandled response: {cmd_type}")
+        if not cmd_type:
+            logger.warning("received message without cmd field")
             return
 
-        # 服务端主动发起的请求（无 status 字段），处理后回复结果
         handler = handlers.get(cmd_type)
         if handler:
             try:
-                result = handler(cmd_params)
-                self._send_json({
-                    "retcode": "success",
-                    "task_id": task_id,
-                    "result": result,
-                })
+                handler(cmd_params)
             except Exception as e:
                 logger.error(f"handle cmd error [{cmd_type}]: {e}")
         else:
-            logger.error(f"unknown command: {cmd_type}")
+            logger.warning(f"unknown command: {cmd_type}")
