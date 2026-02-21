@@ -4,6 +4,7 @@ import config
 import math
 import hit
 import logging
+from gui_mgr import HUD
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ class Controller:
         self._update_vectors()
         
         self._world = world
+        self._chat_box = None
+        self._hud = HUD()
         
         self.holding = 1 # 代表手里拿的哪个方块
         
@@ -36,11 +39,17 @@ class Controller:
     def bind_plugin(self, plugin):
         self._plugin = plugin
 
+    def bind_chat_box(self, chat_box):
+        self._chat_box = chat_box
+
     def _move_forward(self, value):
         self._position += self._forward * value
 
     def _move_right(self, value):
         self._position += self._right * value
+
+    def _move_up(self, value):
+        self._position += glm.vec3(0, 1, 0) * value
 
     def _rotate_yaw(self, value):
         self._yaw += value
@@ -61,6 +70,13 @@ class Controller:
             self._move_right(-value)
         if key_states[pg.K_d]:
             self._move_right(value)
+        if key_states[pg.K_q]:
+            self._move_up(value)
+        if key_states[pg.K_e]:
+            self._move_up(-value)
+
+
+
 
 
     def _mouse_process(self):
@@ -104,6 +120,20 @@ class Controller:
             
             
     def on_key_down(self, key):
+        # 反引号键：切换聊天框显示
+        if key == pg.K_BACKQUOTE:
+            if self._chat_box:
+                self._chat_box.toggle()
+                # 打开聊天框时释放鼠标并启用 IME，关闭时停用 IME
+                if self._chat_box.visible:
+                    self.mouse_grabbed = False
+                    pg.event.set_grab(False)
+                    pg.mouse.set_visible(True)
+                    pg.key.start_text_input()
+                else:
+                    pg.key.stop_text_input()
+            return
+
         if key == pg.K_1:
             self.holding = 1
         elif key == pg.K_2:
@@ -136,9 +166,16 @@ class Controller:
             self._world.reset_map()
 
 
+    def draw_hud(self):
+        """绘制 HUD，仅在鼠标被 grab 时显示准星。"""
+        if self.mouse_grabbed:
+            self._hud.draw()
+
     def update(self, delta):
-        self._keyboard_process(delta)
-        self._mouse_process()
+        # 鼠标可见时（未 grab），跳过游戏的持续输入处理
+        if self.mouse_grabbed:
+            self._keyboard_process(delta)
+            self._mouse_process()
 
         self._update_vectors()
 

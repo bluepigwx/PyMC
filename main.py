@@ -1,5 +1,6 @@
 import pygame as pg
 from OpenGL.GL import *
+import imgui
 import config
 import shader
 import camera
@@ -8,6 +9,7 @@ import world
 import logging
 import plugin
 import agent_plugin
+from gui_mgr import ChatBox, PygameCoreRenderer
 
 logging.basicConfig(level=logging.DEBUG,
                     format="[%(asctime)s][%(filename)s:%(funcName)s:%(lineno)d][%(levelname)s][%(message)s]",
@@ -20,6 +22,8 @@ logger = logging.getLogger("application")
 class Application:
     def __init__(self):
         self._run = False
+        self._imgui_impl = None
+        self._chat_box = None
 
 
     def init(self):
@@ -35,6 +39,13 @@ class Application:
 
         self._clock = pg.time.Clock()
         self._run = True
+
+        # 初始化 imgui
+        imgui.create_context()
+        self._imgui_impl = PygameCoreRenderer()
+
+        # 默认关闭 IME，聊天框打开时再启用
+        pg.key.stop_text_input()
 
         self._world = world.World()
         
@@ -61,7 +72,12 @@ class Application:
         self._agent_plugin = agent_plugin.AgentPlugin(self._world, self._controller)
         self._agent_plugin.init()
         
+        # 初始化聊天框并绑定回调
+        self._chat_box = ChatBox(self._agent_plugin)
+        self._agent_plugin.set_chat_callback(self._chat_box.on_chat_reply)
+        
         self._controller.bind_plugin(self._plugin)
+        self._controller.bind_chat_box(self._chat_box)
         
         
     def run(self):
@@ -69,10 +85,20 @@ class Application:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self._run = False
-                if event.type == pg.MOUSEBUTTONDOWN:
-                    self._controller.on_mouse_button_down(event.button)
-                if event.type == pg.KEYDOWN:
+                
+                # 将事件转发给 imgui
+                self._imgui_impl.process_event(event)
+                
+                # 鼠标可见时（未 grab），imgui 捕获所有输入，仅保留反引号键
+                mouse_visible = not self._controller.mouse_grabbed
+                
+                # 反引号键和 ESC 键始终由 controller 处理
+                if event.type == pg.KEYDOWN and event.key in (pg.K_BACKQUOTE, pg.K_ESCAPE):
                     self._controller.on_key_down(event.key)
+                elif event.type == pg.KEYDOWN and not mouse_visible:
+                    self._controller.on_key_down(event.key)
+                if event.type == pg.MOUSEBUTTONDOWN and not mouse_visible:
+                    self._controller.on_mouse_button_down(event.button)
             
             delta = self._clock.tick()
 
@@ -81,6 +107,8 @@ class Application:
             self._begin_render()
             
             self._draw(delta)
+
+            self._draw_gui()
             
             self._end_render()
 
@@ -111,16 +139,52 @@ class Application:
         self._world.draw()
 
 
+    def _draw_gui(self):
+        """绘制 imgui GUI 层。"""
+        # 保存 3D 渲染使用的 GL 状态
+        prev_blend = glIsEnabled(GL_BLEND)
+        prev_depth = glIsEnabled(GL_DEPTH_TEST)
+        prev_cull = glIsEnabled(GL_CULL_FACE)
+        prev_scissor = glIsEnabled(GL_SCISSOR_TEST)
+
+        self._imgui_impl.process_inputs()
+        imgui.new_frame()
+
+        self._controller.draw_hud()
+        self._chat_box.draw()
+
+        imgui.render()
+        self._imgui_impl.render(imgui.get_draw_data())
+
+        # 恢复 GL 状态
+        if prev_depth:
+            glEnable(GL_DEPTH_TEST)
+        else:
+            glDisable(GL_DEPTH_TEST)
+        if prev_blend:
+            glEnable(GL_BLEND)
+        else:
+            glDisable(GL_BLEND)
+        if prev_cull:
+            glEnable(GL_CULL_FACE)
+        else:
+            glDisable(GL_CULL_FACE)
+        if prev_scissor:
+            glEnable(GL_SCISSOR_TEST)
+        else:
+            glDisable(GL_SCISSOR_TEST)
+
+
     def exit(self):
-        if not self._run:
-            return
-        
         if self._plugin:
             self._plugin.finit()
             
         if self._agent_plugin:
             self._agent_plugin.finit()
-        
+
+        if self._imgui_impl:
+            self._imgui_impl.shutdown()
+
         pg.quit()
 
 
