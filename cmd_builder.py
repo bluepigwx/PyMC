@@ -14,15 +14,19 @@ def build_request(cmd, params=None):
     return {"cmd": cmd, "params": params or {}}
 
 
-def build_response(cmd, status, params=None):
+def build_response(cmd, status, params=None, request_id=None):
     """构建客户端→服务端的响应消息。
 
     Args:
         cmd: 命令名称。
         status: 状态码，"ok" 或 "error"。
         params: 响应参数。
+        request_id: 请求唯一标识，服务端发来的原样回传。
 
     Returns:
-        格式化的消息字典: {"cmd": "xxx", "status": "ok|error", "params": {...}}
+        格式化的消息字典。
     """
-    return {"cmd": cmd, "status": status, "params": params or {}}
+    msg = {"cmd": cmd, "status": status, "params": params or {}}
+    if request_id:
+        msg["request_id"] = request_id
+    return msg

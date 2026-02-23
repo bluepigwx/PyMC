@@ -1,4 +1,5 @@
 import logging
+import math
 import threading
 import json
 from collections import deque
@@ -186,7 +187,7 @@ class AgentPlugin:
         logger.info(f"handle hello message {params}")
 
 
-    def _handle_get_scene_info(self, params):
+    def _handle_get_scene_info(self, params, request_id=None):
         logger.info("_handle_get_scene_info")
 
         scene_info = {
@@ -202,28 +203,29 @@ class AgentPlugin:
 
         scene_info["blocks"] = self.world.get_all_blocks()
 
-        self._send_json(build_response("get_scene_info", "ok", {"scene_info": scene_info}))
+        self._send_json(build_response("get_scene_info", "ok", {"scene_info": scene_info}, request_id=request_id))
 
 
-    def _handle_set_blocks(self, params):
+    def _handle_set_blocks(self, params, request_id=None):
         logger.info(f"_handle_set_blocks params: {params}")
 
         for block in params["blocks"]:
             block_type = block["type"]
-            wx = block["wx"]
-            wy = block["wy"]
-            wz = block["wz"]
+            wx = math.floor(block["wx"])
+            wy = math.floor(block["wy"])
+            wz = math.floor(block["wz"])
 
             self.world.set_block((wx, wy, wz), block_type)
 
-        self._send_json(build_response("set_blocks", "ok", {"count": len(params.get("blocks", []))}))
+        self._send_json(build_response("set_blocks", "ok", {"count": len(params.get("blocks", []))}, request_id=request_id))
 
 
     def process_cmd(self, command):
         """处理服务端发来的消息。
 
         消息格式（与服务端 cmd_dispatch 对齐）:
-            {"cmd": "xxx", "status": "ok|error", "params": {...}}
+            请求: {"cmd": "xxx", "request_id": "...", "params": {...}}
+            响应: {"cmd": "xxx", "status": "ok|error", "params": {...}}
         """
         handlers = {
             "connected": self._handle_connected,
@@ -239,6 +241,7 @@ class AgentPlugin:
 
         cmd_type = command.get("cmd")
         cmd_params = command.get("params", {})
+        request_id = command.get("request_id")
 
         if not cmd_type:
             logger.warning("received message without cmd field")
@@ -247,7 +250,11 @@ class AgentPlugin:
         handler = handlers.get(cmd_type)
         if handler:
             try:
-                handler(cmd_params)
+                # 服务端请求带 request_id 的 handler 需要额外参数
+                if request_id is not None:
+                    handler(cmd_params, request_id=request_id)
+                else:
+                    handler(cmd_params)
             except Exception as e:
                 logger.error(f"handle cmd error [{cmd_type}]: {e}")
         else:
