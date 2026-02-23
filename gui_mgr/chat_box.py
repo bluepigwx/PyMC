@@ -16,6 +16,7 @@ class ChatBox:
         self._input_text = ""
         self._chat_history = []  # [(role, text), ...]
         self._need_focus = False
+        self._last_sent = ""  # 防止同一条消息重复发送
 
     def toggle(self):
         """切换对话框的显示/隐藏状态。"""
@@ -35,6 +36,7 @@ class ChatBox:
             conversation_id: 当前对话 ID。
         """
         self._chat_history.append(("agent", reply))
+        self._last_sent = ""  # 重置，允许用户再次发送相同消息
 
     def draw(self):
         """在 imgui 帧中绘制聊天对话框。必须在 imgui.new_frame() 之后调用。"""
@@ -84,17 +86,15 @@ class ChatBox:
                 imgui.INPUT_TEXT_ENTER_RETURNS_TRUE,
             )
 
-            if changed and self._input_text.strip():
-                self._send_message(self._input_text.strip())
+            imgui.same_line()
+            send_clicked = imgui.button("Send")
+
+            # 回车或点击 Send 统一触发，防止同帧重复
+            if (changed or send_clicked) and self._input_text.strip():
+                msg = self._input_text.strip()
                 self._input_text = ""
                 self._need_focus = True
-
-            imgui.same_line()
-            if imgui.button("Send"):
-                if self._input_text.strip():
-                    self._send_message(self._input_text.strip())
-                    self._input_text = ""
-                    self._need_focus = True
+                self._send_message(msg)
 
         imgui.end()
 
@@ -104,6 +104,11 @@ class ChatBox:
         Args:
             text: 用户输入的消息文本。
         """
+        # 防止连续帧重复发送同一条消息
+        if text == self._last_sent:
+            return
+        self._last_sent = text
+
         logger.info(f"send chat: {text[:200]}")
         self._chat_history.append(("user", text))
         try:

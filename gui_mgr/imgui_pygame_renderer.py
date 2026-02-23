@@ -78,6 +78,7 @@ class PygameCoreRenderer(ProgrammablePipelineRenderer):
         super().__init__()
 
         self._gui_time = None
+        self._ctrl_held = False
 
         # imgui key_map 值必须在 -1..511 范围内，
         # 但 Pygame 的某些键常量（如 K_KP_ENTER）远超 512，
@@ -128,6 +129,7 @@ class PygameCoreRenderer(ProgrammablePipelineRenderer):
             io.key_ctrl = (event.mod & pygame.KMOD_CTRL) != 0
             io.key_alt = (event.mod & pygame.KMOD_ALT) != 0
             io.key_super = (event.mod & pygame.KMOD_META) != 0
+            self._ctrl_held = io.key_ctrl
 
         elif event.type == pygame.KEYUP:
             slot = self._pygame_to_slot.get(event.key)
@@ -139,8 +141,14 @@ class PygameCoreRenderer(ProgrammablePipelineRenderer):
             io.key_ctrl = (event.mod & pygame.KMOD_CTRL) != 0
             io.key_alt = (event.mod & pygame.KMOD_ALT) != 0
             io.key_super = (event.mod & pygame.KMOD_META) != 0
+            self._ctrl_held = io.key_ctrl
 
         elif event.type == pygame.TEXTINPUT:
+            # Ctrl 组合键（如 Ctrl+V 粘贴）时，Pygame 可能同时产生
+            # TEXTINPUT 事件，导致剪贴板内容被 imgui 粘贴一次后又作为
+            # 文本输入重复插入。按住 Ctrl 时跳过 TEXTINPUT 以避免重复。
+            if self._ctrl_held:
+                return
             for char in event.text:
                 io.add_input_character(ord(char))
 
