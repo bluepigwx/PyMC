@@ -26,7 +26,7 @@ class World:
     def load_map(self):
         logger.info(f"begin load map data...")
         #self.map_data.load()
-        self.map_data.build_custom_chunks()
+        self.map_data.build_custom_chunks_v2()
         logger.info(f"end load map data...")
         
         #也可以自定义生成地图

@@ -33,10 +33,25 @@ class MapData:
             for z in range(config.CHUNK_LENGHTH):
                 new_chunk.blocks[x][0][z] = 2
 
+    def build_custom_chunks_v2(self):
+        # Generate 4 chunks centered around world origin (0,0,0) at their intersection
+        chunk_positions = [
+            (-1, 0, -1),
+            (-1, 0,  0),
+            ( 0, 0, -1),
+            ( 0, 0,  0),
+        ]
+        for position in chunk_positions:
+            new_chunk = chunk.Chunk(self.world, position)
+            self.world.chunks[position] = new_chunk
+            for x in range(config.CHUNK_WIDHT):
+                for z in range(config.CHUNK_LENGHTH):
+                    new_chunk.blocks[x][0][z] = 2
+
         
     def reset_map_data(self):
         self.world.chunks = {}
-        self.build_custom_chunks()
+        self.build_custom_chunks_v2()
     
     
     def save(self, path=""):
