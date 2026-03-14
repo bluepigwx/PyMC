@@ -220,6 +220,87 @@ class AgentPlugin:
         self._send_json(build_response("set_blocks", "ok", {"count": len(params.get("blocks", []))}, request_id=request_id))
 
 
+    def _expand_regions(self, regions):
+        """Expand region definitions into a flat list of (type, wx, wy, wz) tuples.
+
+        Each region defines a rectangular volume with optional exclusions and overrides.
+
+        Region format:
+            {
+                "type": int,           # block type for this region
+                "x": [min, max],       # x range inclusive
+                "y": [min, max],       # y range inclusive
+                "z": [min, max],       # z range inclusive
+                "exclude": [           # optional: positions to skip
+                    {"x": int, "y": int, "z": int}, ...
+                ],
+                "override": [          # optional: positions with different block type
+                    {"type": int, "x": int, "y": int, "z": int}, ...
+                ]
+            }
+
+        Returns:
+            list of (block_type, wx, wy, wz) tuples
+        """
+        blocks = []
+        for region in regions:
+            block_type = region["type"]
+            x_range = region["x"]
+            y_range = region["y"]
+            z_range = region["z"]
+
+            # Build exclude set for O(1) lookup
+            exclude_set = set()
+            for ex in region.get("exclude", []):
+                exclude_set.add((ex["x"], ex["y"], ex["z"]))
+
+            # Build override map: (x, y, z) -> type
+            override_map = {}
+            for ov in region.get("override", []):
+                override_map[(ov["x"], ov["y"], ov["z"])] = ov["type"]
+
+            for y in range(y_range[0], y_range[1] + 1):
+                for x in range(x_range[0], x_range[1] + 1):
+                    for z in range(z_range[0], z_range[1] + 1):
+                        if (x, y, z) in exclude_set:
+                            continue
+                        t = override_map.get((x, y, z), block_type)
+                        blocks.append((t, x, y, z))
+
+        return blocks
+
+
+    def _handle_set_blocks_region(self, params, request_id=None):
+        """Handle region-based block placement.
+
+        Params format:
+            {
+                "regions": [
+                    {
+                        "type": 5,
+                        "x": [0, 6], "y": [0, 0], "z": [0, 6],
+                        "exclude": [{"x":3,"y":1,"z":0}, ...],
+                        "override": [{"type":20,"x":0,"y":2,"z":3}, ...]
+                    },
+                    ...
+                ]
+            }
+        """
+        regions = params.get("regions", [])
+        if not regions:
+            logger.warning("set_blocks_region: empty regions")
+            self._send_json(build_response("set_blocks_region", "error", {"message": "empty regions"}, request_id=request_id))
+            return
+
+        blocks = self._expand_regions(regions)
+        logger.info(f"set_blocks_region: {len(regions)} regions -> {len(blocks)} blocks")
+
+        for block_type, wx, wy, wz in blocks:
+            self.world.set_block((wx, wy, wz), block_type)
+
+        self._send_json(build_response("set_blocks_region", "ok", {"count": len(blocks)}, request_id=request_id))
+
+
     def process_cmd(self, command):
         """处理服务端发来的消息。
 
@@ -233,6 +314,7 @@ class AgentPlugin:
             "hello": self._handle_hello,
             "get_scene_info": self._handle_get_scene_info,
             "set_blocks": self._handle_set_blocks,
+            "set_blocks_region": self._handle_set_blocks_region,
         }
 
         if not self._ws:
