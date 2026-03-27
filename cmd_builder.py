@@ -11,7 +11,9 @@ def build_request(cmd, params=None):
     Returns:
         格式化的消息字典: {"cmd": "xxx", "params": {...}}
     """
-    return {"cmd": cmd, "params": params or {}}
+    p = params.copy() if params else {}
+    p["session_id"] = "ses_2d680558fffessmUvMSvZpmC2R"
+    return {"cmd": cmd, "params": p}
 
 
 def build_response(cmd, status, params=None, request_id=None):
@@ -27,6 +29,7 @@ def build_response(cmd, status, params=None, request_id=None):
         格式化的消息字典。
     """
     msg = {"cmd": cmd, "status": status, "params": params or {}}
+    msg["params"]["session_id"] = "ses_2d680558fffessmUvMSvZpmC2R"
     if request_id:
         msg["request_id"] = request_id
     return msg

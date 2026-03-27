@@ -34,6 +34,7 @@ class MapData:
                 new_chunk.blocks[x][0][z] = 2
 
     def build_custom_chunks_v2(self):
+        return
         # Generate 4 chunks centered around world origin (0,0,0) at their intersection
         chunk_positions = [
             (-1, 0, -1),

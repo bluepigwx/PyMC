@@ -17,6 +17,7 @@ class ChatBox:
         self._chat_history = []  # [(role, text), ...]
         self._need_focus = False
         self._last_sent = ""  # 防止同一条消息重复发送
+        self._streaming = False  # True while receiving streaming deltas
 
     def toggle(self):
         """切换对话框的显示/隐藏状态。"""
@@ -31,11 +32,48 @@ class ChatBox:
     def on_chat_reply(self, reply, conversation_id):
         """收到 agent 回复时调用，将回复追加到聊天记录。
 
+        If streaming is active, this is ignored because deltas already
+        populated the chat entry.  Only used as fallback for non-streaming
+        plugins.
+
         Args:
             reply: agent 回复文本。
             conversation_id: 当前对话 ID。
         """
+        if self._streaming:
+            # Streaming mode: text was already appended via on_chat_delta,
+            # skip duplicate append.
+            return
         self._chat_history.append(("agent", reply))
+        self._last_sent = ""  # 重置，允许用户再次发送相同消息
+
+    def on_chat_start(self):
+        """Streaming started: create a new empty agent entry for appending.
+
+        Called when the first delta of a new assistant message arrives.
+        """
+        self._streaming = True
+        self._chat_history.append(("agent", ""))
+
+    def on_chat_delta(self, delta):
+        """Append incremental text to the current streaming agent entry.
+
+        Args:
+            delta: incremental text chunk (token-by-token).
+        """
+        if not self._streaming:
+            return
+        if self._chat_history and self._chat_history[-1][0] == "agent":
+            # Tuples are immutable, so replace the last entry
+            prev_role, prev_text = self._chat_history[-1]
+            self._chat_history[-1] = (prev_role, prev_text + delta)
+
+    def on_chat_end(self):
+        """Streaming finished: finalize the current agent entry.
+
+        Called when the assistant message is complete.
+        """
+        self._streaming = False
         self._last_sent = ""  # 重置，允许用户再次发送相同消息
 
     def draw(self):

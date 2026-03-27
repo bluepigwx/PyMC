@@ -12,5 +12,6 @@ dependencies = [
     "pygame==2.6.1",
     "pyglm==2.8.3",
     "pyopengl==3.1.10",
+    "requests>=2.31.0",
     "websocket-client>=1.6.0",
 ]

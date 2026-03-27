@@ -7,9 +7,9 @@ import camera
 import controller
 import world
 import logging
-import plugin
-import agent_plugin
 from gui_mgr import ChatBox, PygameCoreRenderer
+from gui_mgr.opencode_agent_plugin import OpenCodePlugin
+import tcp_agent_plugin
 
 logging.basicConfig(level=logging.DEBUG,
                     format="[%(asctime)s][%(filename)s:%(funcName)s:%(lineno)d][%(levelname)s][%(message)s]",
@@ -66,15 +66,18 @@ class Application:
         self._controller.bind_camera(self._camera)
         
         logger.info(f"init plugin...")
-        self._plugin = plugin.Plugin(self._world, self._controller)
+        self._plugin = tcp_agent_plugin.Plugin(self._world, self._controller)
+        #self._plugin = OpenCodePlugin(self._world, self._controller)
         self._plugin.init()
         
-        self._agent_plugin = agent_plugin.AgentPlugin(self._world, self._controller)
-        self._agent_plugin.init()
-        
-        # 初始化聊天框并绑定回调
-        self._chat_box = ChatBox(self._agent_plugin)
-        self._agent_plugin.set_chat_callback(self._chat_box.on_chat_reply)
+        # 初始化聊天框并绑定回调（使用 TCP plugin）
+        self._chat_box = ChatBox(self._plugin)
+        self._plugin.set_chat_callback(self._chat_box.on_chat_reply)
+        self._plugin.set_chat_stream_callbacks(
+            self._chat_box.on_chat_start,
+            self._chat_box.on_chat_delta,
+            self._chat_box.on_chat_end,
+        )
         
         self._controller.bind_plugin(self._plugin)
         self._controller.bind_chat_box(self._chat_box)
@@ -115,8 +118,6 @@ class Application:
 
     def _update(self, delta):
         self._plugin.update()
-        
-        self._agent_plugin.update()
         
         self._controller.update(delta)
 
@@ -178,9 +179,6 @@ class Application:
     def exit(self):
         if self._plugin:
             self._plugin.finit()
-            
-        if self._agent_plugin:
-            self._agent_plugin.finit()
 
         if self._imgui_impl:
             self._imgui_impl.shutdown()
