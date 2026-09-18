@@ -42,6 +42,16 @@ class World:
         
         self.map_data.reset_map_data()
         self.build_meshs()
+
+
+    def save_scene_json(self, path="scene.json"):
+        """把当前场景导出为 JSON 文件，返回 (方块数, 路径)。"""
+        return self.map_data.save_json(path)
+
+
+    def load_scene_json(self, path="scene.json", clear=True):
+        """从 JSON 文件加载场景，返回方块数。"""
+        return self.map_data.load_json(path, clear)
         
 
         

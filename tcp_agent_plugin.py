@@ -546,6 +546,41 @@ class Plugin:
 
         self._send_json(build_response("set_blocks_region", "ok", {"count": len(blocks)}, request_id=request_id))
     
+    def _handle_save_scene_json(self, params, request_id=None):
+        """把当前场景导出为 JSON 文件。
+
+        params: {"path": "scene.json"}  # 可选，默认 scene.json
+        """
+        path = params.get("path", "scene.json")
+        try:
+            count, saved_path = self.world.save_scene_json(path)
+            self._send_json(build_response(
+                "save_scene_json", "ok",
+                {"path": saved_path, "block_count": count},
+                request_id=request_id))
+        except Exception as e:
+            logger.error(f"save_scene_json failed: {e}")
+            self._send_json(build_response(
+                "save_scene_json", "error", {"message": str(e)}, request_id=request_id))
+
+    def _handle_load_scene_json(self, params, request_id=None):
+        """从 JSON 文件加载场景。
+
+        params: {"path": "scene.json", "clear": true}
+        """
+        path = params.get("path", "scene.json")
+        clear = params.get("clear", True)
+        try:
+            count = self.world.load_scene_json(path, clear)
+            self._send_json(build_response(
+                "load_scene_json", "ok",
+                {"path": path, "block_count": count},
+                request_id=request_id))
+        except Exception as e:
+            logger.error(f"load_scene_json failed: {e}")
+            self._send_json(build_response(
+                "load_scene_json", "error", {"message": str(e)}, request_id=request_id))
+
     # ------------------------------------------------------------------
     # 命令分发
     # ------------------------------------------------------------------
@@ -565,6 +600,8 @@ class Plugin:
             "get_scene_info": self._handle_get_scene_info,
             "set_blocks": self._handle_set_blocks,
             "set_blocks_region": self._handle_set_blocks_region,
+            "save_scene_json": self._handle_save_scene_json,
+            "load_scene_json": self._handle_load_scene_json,
         }
         
         if not self.socket:

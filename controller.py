@@ -161,9 +161,24 @@ class Controller:
         if key == pg.K_h:
             self._position = config.HOME_POS
         if key == pg.K_j:
-            self._plugin._handle_get_scene_info()
+            if self._plugin:
+                self._plugin._handle_get_scene_info({})
         if key == pg.K_r:
             self._world.reset_map()
+        if key == pg.K_k:
+            # 导出当前场景为 JSON
+            try:
+                count, path = self._world.save_scene_json("scene.json")
+                logger.info(f"scene saved: {count} blocks -> {path}")
+            except Exception as e:
+                logger.error(f"save scene failed: {e}")
+        if key == pg.K_l:
+            # 从 JSON 还原场景
+            try:
+                count = self._world.load_scene_json("scene.json")
+                logger.info(f"scene loaded: {count} blocks")
+            except Exception as e:
+                logger.error(f"load scene failed: {e}")
 
 
     def draw_hud(self):
