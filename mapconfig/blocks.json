@@ -1,8 +1,8 @@
 {
  "format": "pymc_block_defs",
  "version": 1,
- "generator": "gen_block_defs.py",
- "saved_at": "2026-09-19T13:37:24+0800",
+ "generator": "tool/gen_block_defs.py",
+ "saved_at": "2026-09-19T14:06:15+0800",
  "source": "mapconfig/blocks.mcpy",
  "note": "Shared block type definitions for pymc_scene files. Scene files reference block ids; look them up here. id 0 is air and is not listed. Texture files live in textures/<name>.png",
  "texture_dir": "textures",

@@ -4,11 +4,11 @@
 这份文件的内容只依赖 mapconfig/blocks.mcpy 和 models/，跟具体场景无关。
 改了 mapconfig/blocks.mcpy 之后要重跑一次。
 
-用法:
-    uv run python gen_block_defs.py
+用法（在哪个目录下执行都可以）:
+    uv run python tool/gen_block_defs.py
 
 校验生成结果与运行中的游戏是否一致：
-    scene_format.check_block_defs(world)
+    scene_serializer.check_block_defs(world)
 """
 
 import json
@@ -17,10 +17,19 @@ import re
 import sys
 import time
 
+# 本文件在 tool/ 子目录下，工程根要往上退一层。
+# 路径全部基于工程根解析，不依赖执行时的当前目录。
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# import models 需要工程根在 sys.path 里
+#（直接 python tool/gen_block_defs.py 时 sys.path[0] 是 tool/）
+if PROJECT_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_DIR)
+
 import models
 
-SRC = os.path.join("mapconfig", "blocks.mcpy")
-OUT = os.path.join("mapconfig", "blocks.json")
+SRC = os.path.join(PROJECT_DIR, "mapconfig", "blocks.mcpy")
+OUT = os.path.join(PROJECT_DIR, "mapconfig", "blocks.json")
 
 DEFS_NAME = "pymc_block_defs"
 DEFS_VERSION = 1
@@ -107,9 +116,9 @@ def main():
     doc = {
         "format": DEFS_NAME,
         "version": DEFS_VERSION,
-        "generator": "gen_block_defs.py",
+        "generator": "tool/gen_block_defs.py",
         "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-        "source": SRC.replace("\\", "/"),
+        "source": os.path.relpath(SRC, PROJECT_DIR).replace("\\", "/"),
         "note": (
             "Shared block type definitions for pymc_scene files. "
             "Scene files reference block ids; look them up here. "

@@ -10,7 +10,7 @@ class MapData:
     """
     负责默认地形生成与批量写入。
 
-    场景的存取不在这里，走 scene_format 模块（单个 JSON 文件，
+    场景的存取不在这里，走 scene_serializer 模块（单个 JSON 文件，
     路径见 world.DEFAULT_SCENE_PATH）。
     """
     def __init__(self, world):
@@ -18,19 +18,20 @@ class MapData:
 
 
     def build_custom_chunks_v2(self):
-        """生成围绕世界原点的 4 个 chunk，y=0 铺一层草地。"""
-        chunk_positions = [
-            (-1, 0, -1),
-            (-1, 0,  0),
-            ( 0, 0, -1),
-            ( 0, 0,  0),
-        ]
-        for position in chunk_positions:
-            new_chunk = chunk.Chunk(self.world, position)
-            self.world.chunks[position] = new_chunk
-            for x in range(config.CHUNK_WIDHT):
-                for z in range(config.CHUNK_LENGHTH):
-                    new_chunk.blocks[x][0][z] = 2
+        """生成围绕世界原点的平坦草地，y=0 铺一层草。
+
+        大小由 config.DEFAULT_MAP_HALF_CHUNKS 决定：x/z 方向各覆盖
+        ±N 个 chunk，草地范围 x/z ∈ [-N*16, N*16-1]。
+        """
+        n = config.DEFAULT_MAP_HALF_CHUNKS
+        for cx in range(-n, n):
+            for cz in range(-n, n):
+                position = (cx, 0, cz)
+                new_chunk = chunk.Chunk(self.world, position)
+                self.world.chunks[position] = new_chunk
+                for x in range(config.CHUNK_WIDHT):
+                    for z in range(config.CHUNK_LENGHTH):
+                        new_chunk.blocks[x][0][z] = 2
 
 
     def reset_map_data(self):

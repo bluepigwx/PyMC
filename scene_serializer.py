@@ -10,7 +10,7 @@
     YZX      展开顺序，先变 x，x 走完换 z，z 走完换 y
 
 方块类型说明（名字、贴图、模型）不写进场景文件，统一放在
-mapconfig/blocks.json 里，由 gen_block_defs.py 从 mapconfig/blocks.mcpy 生成。
+mapconfig/blocks.json 里，由 tool/gen_block_defs.py 从 mapconfig/blocks.mcpy 生成。
 场景文件只存方块 id，用 block_defs 字段指向那份共享定义。
 
 本模块不依赖 OpenGL，可脱离游戏进程单独使用。
@@ -274,7 +274,7 @@ def load_file(path):
 def load_block_defs(path=BLOCK_DEFS_PATH):
     """读取 mapconfig/blocks.json，返回 {block_id: 定义字典}。
 
-    这份文件由 gen_block_defs.py 从 mapconfig/blocks.mcpy 生成，内容与场景无关。
+    这份文件由 tool/gen_block_defs.py 从 mapconfig/blocks.mcpy 生成，内容与场景无关。
     """
     with open(path, "r", encoding="utf-8") as f:
         doc = json.load(f)
@@ -338,11 +338,11 @@ def check_block_defs(world, path=BLOCK_DEFS_PATH):
     """比对运行中的 world 与 mapconfig/blocks.json，返回不一致的方块 id 列表。
 
     两边都源自 mapconfig/blocks.mcpy，不一致说明 blocks.mcpy 改过之后
-    忘了重跑 gen_block_defs.py。
+    忘了重跑 tool/gen_block_defs.py。
     """
     if not os.path.exists(path):
         raise FileNotFoundError(
-            f"{path} not found, run: uv run python gen_block_defs.py"
+            f"{path} not found, run: uv run python tool/gen_block_defs.py"
         )
 
     shared = load_block_defs(path)

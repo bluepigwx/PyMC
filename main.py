@@ -8,7 +8,6 @@ import camera
 import controller
 import world
 import logging
-import os
 import sys
 from gui_mgr import ChatBox, PygameCoreRenderer
 import tcp_agent_plugin
@@ -82,6 +81,7 @@ class Application:
         #   from gui_mgr.opencode_agent_plugin import OpenCodePlugin
         #   self._plugin = OpenCodePlugin(self._world, self._controller)
         self._plugin = tcp_agent_plugin.Plugin(self._world, self._controller)
+        self._plugin.enable = config.TCP_AGENT_ENABLED
         self._plugin.init()
         
         # 初始化聊天框并绑定回调（使用 TCP plugin）
@@ -225,30 +225,24 @@ def _parse_args(argv):
         python main.py                        生成默认的平坦草地
         python main.py <场景文件>              载入指定场景
         python main.py --scene <场景文件>      同上
-        python main.py --default              强制用默认草地
+        python main.py --default              强制用默认草地（与不传参相同）
     """
     import argparse
 
     parser = argparse.ArgumentParser(description="PyMC")
     parser.add_argument("scene", nargs="?", default=None,
-                        help=f"场景文件路径，省略时若 {world.DEFAULT_SCENE_PATH} 存在则自动载入")
+                        help="场景文件路径，省略时生成默认平坦草地")
     parser.add_argument("--scene", dest="scene_opt", default=None,
                         help="同位置参数 scene")
     parser.add_argument("--default", action="store_true",
-                        help="忽略场景文件，生成默认平坦草地")
+                        help="强制用默认草地（与不传参相同）")
     args = parser.parse_args(argv)
 
     if args.default:
         return None
 
-    path = args.scene_opt or args.scene
-    if path:
-        return path
-
-    # 都没给：默认场景文件存在就用它
-    if os.path.exists(world.DEFAULT_SCENE_PATH):
-        return world.DEFAULT_SCENE_PATH
-    return None
+    # 只加载显式指定的场景，不再自动读默认存档
+    return args.scene_opt or args.scene
 
 
 if __name__ == "__main__":

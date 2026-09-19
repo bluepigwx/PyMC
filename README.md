@@ -14,14 +14,11 @@ uv sync
 ## 启动
 
 ```bash
-# 载入默认场景（save/v1/world.json 存在时自动加载）
+# 生成一片平坦草地（默认行为，不加载任何场景）
 uv run python main.py
 
 # 载入指定场景
-uv run python main.py 某个场景.json
-
-# 忽略场景文件，生成一片平坦草地
-uv run python main.py --default
+uv run python main.py save/v1/world.json
 ```
 
 ## 操作
@@ -59,9 +56,9 @@ MCP 客户端配置：
 }
 ```
 
-提供 10 个工具：`get_game_status`、`list_block_types`、`place_blocks`、
+提供 11 个工具：`get_game_status`、`list_block_types`、`place_blocks`、
 `fill_region`、`fill_regions`、`clear_region`、`get_scene_info`、`save_scene`、
-`load_scene`、`reset_world`。
+`load_scene`、`reset_world`、`reset_scene`（一键重建：清场 + 重生草地 + 可选叠加场景文件）。
 
 工具函数跑在 uvicorn 的工作线程，而 OpenGL 上下文绑在主线程，所以所有改动都
 先排队，由主循环每帧取出执行。
@@ -69,6 +66,7 @@ MCP 客户端配置：
 **TCP，`localhost:8001`**
 
 方向跟直觉相反：**游戏是客户端，主动去连服务端**。实现见 `tcp_agent_plugin.py`。
+默认不连，把 `config.py` 里的 `TCP_AGENT_ENABLED` 改成 `True` 才会在启动时连接。
 
 `scene_server.py` 是配套的测试服务端，会下发一串建造指令：
 
@@ -85,7 +83,7 @@ x/z ∈ [-16,15] 这一小块，城堡会盖在旧地形上。
 
 ## 场景存储格式
 
-格式定义见 `mapv1.md`，编解码实现在 `scene_format.py`。
+格式定义见 `mapv1.md`，编解码实现在 `scene_serializer.py`。
 
 要点是把世界切成 16×16×16 的 section，每段用局部调色板加游程编码写进 JSON：
 
@@ -110,7 +108,7 @@ x/z ∈ [-16,15] 这一小块，城堡会盖在旧地形上。
 改了 `mapconfig/blocks.mcpy` 之后要重新生成一次：
 
 ```bash
-uv run python gen_block_defs.py
+uv run python tool/gen_block_defs.py
 ```
 
 ## 目录
@@ -124,7 +122,7 @@ block_type.py        方块蓝图，把贴图绑到几何面上
 models/              22 种方块几何模型，纯数据
 mapconfig/blocks.mcpy    84 种方块的定义源文件
 mapconfig/blocks.json    由 blocks.mcpy 生成的共享方块定义
-scene_format.py      场景格式编解码
+scene_serializer.py  场景格式编解码
 map_data.py          默认地形生成
 save/v1/             新格式场景
 camera.py shader.py texture_mgr.py hit.py    渲染与拾取
@@ -133,4 +131,5 @@ gui_mgr/             imgui 界面层
 mcp_server/          MCP 服务
 tcp_agent_plugin.py  TCP 客户端插件
 scene_server.py      TCP 测试服务端
+skill/               给 AI Agent 的场景生成技能包（可独立发布）
 ```

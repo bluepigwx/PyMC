@@ -5,7 +5,7 @@ import texture_mgr
 import models
 import math
 import map_data
-import scene_format
+import scene_serializer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -62,12 +62,12 @@ class World:
         格式见 mapv1.md：section + 局部调色板 + 游程编码。
         方块类型说明不写进来，在 mapconfig/blocks.json 里。
         """
-        return scene_format.save_world(self, path)
+        return scene_serializer.save_world(self, path)
 
 
     def load_scene_json(self, path=DEFAULT_SCENE_PATH, clear=True):
         """从 JSON 文件加载场景，返回方块数。"""
-        return scene_format.load_world(self, path, clear)
+        return scene_serializer.load_world(self, path, clear)
         
 
         

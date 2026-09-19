@@ -352,7 +352,9 @@ class Plugin:
                 "so never assume where the surface is. Call get_scene_info first to read the "
                 "current bounds and camera position, then pick coordinates.\n"
                 "Prefer fill_regions over place_blocks for box shapes: it is one call and the "
-                "game batches the mesh rebuild."
+                "game batches the mesh rebuild.\n"
+                "To rebuild the scene from scratch, call reset_scene (optionally with a scene "
+                "file path) — it wipes everything and regrows the grass first."
             ),
         )
 
@@ -448,18 +450,19 @@ class Plugin:
 
         @mcp.tool
         def clear_region(
-            x_min: int = -16,
-            x_max: int = 15,
+            x_min: int = -128,
+            x_max: int = 127,
             y_min: int = 1,
             y_max: int = 14,
-            z_min: int = -16,
-            z_max: int = 15,
+            z_min: int = -128,
+            z_max: int = 127,
         ) -> dict:
             """Delete every block in a box (fills it with air).
 
-            The defaults only cover the small flat default world (x/z in [-16,15],
-            y in [1,14]). They will NOT clear a loaded save with real terrain —
-            call get_scene_info first and pass that bounding box explicitly.
+            The defaults cover the flat default world (x/z in [-128,127],
+            y in [1,14]; the y=0 grass layer is kept). They will NOT clear a
+            loaded save with real terrain — call get_scene_info first and pass
+            that bounding box explicitly.
             """
             self._stats["tool_calls"] += 1
             return self._fill_regions([Region(
@@ -533,6 +536,32 @@ class Plugin:
             self._stats["tool_calls"] += 1
             self._run_on_main(self.world.reset_map)
             return {"status": "reset", "chunks_loaded": len(self.world.chunks)}
+
+        @mcp.tool
+        def reset_scene(path: str = "") -> dict:
+            """One-call scene rebuild: wipe everything, regrow the grass ground,
+            then load the given scene file on top of it.
+
+            This is the reset entry point for iterative scene generation:
+            call it before every new build so each experiment starts from the
+            same clean state. Without `path` you get a bare grass canvas;
+            with `path` the scene file is loaded over the fresh grass
+            (equivalent to reset_world + load_scene(clear=False)).
+            """
+            self._stats["tool_calls"] += 1
+
+            def job():
+                self.world.reset_map()
+                if path:
+                    return self.world.load_scene_json(path, clear=False)
+                return 0
+
+            loaded = self._run_on_main(job)
+            return {
+                "status": "reset",
+                "chunks_loaded": len(self.world.chunks),
+                "scene_loaded": loaded,
+            }
 
         return mcp
 
