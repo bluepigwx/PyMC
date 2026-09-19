@@ -106,11 +106,11 @@ class Controller:
         
         def hit_callback(cur_block, next_block):
             if button == 1:
-                #右键
+                # 左键：在射线命中面的前一格放置方块
                 logger.debug(f"放置方块在 {cur_block}")
                 self._world.set_block(cur_block, self.holding)
             elif button == 3:
-                #左键
+                # 右键：删除射线命中的方块
                 logger.debug(f"击中方块 {next_block}")
                 self._world.set_block(next_block, 0)
 
@@ -170,16 +170,16 @@ class Controller:
         if key == pg.K_r:
             self._world.reset_map()
         if key == pg.K_k:
-            # 导出当前场景为 JSON
+            # 导出当前场景
             try:
-                count, path = self._world.save_scene_json("scene.json")
+                count, path = self._world.save_scene_json()
                 logger.info(f"scene saved: {count} blocks -> {path}")
             except Exception as e:
                 logger.error(f"save scene failed: {e}")
         if key == pg.K_l:
-            # 从 JSON 还原场景
+            # 还原场景
             try:
-                count = self._world.load_scene_json("scene.json")
+                count = self._world.load_scene_json()
                 logger.info(f"scene loaded: {count} blocks")
             except Exception as e:
                 logger.error(f"load scene failed: {e}")

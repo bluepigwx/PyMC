@@ -74,15 +74,6 @@ wheels = [
 ]
 
 [[package]]
-name = "base36"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7e/63/e75b652d027bb394b67a61d232fd2f10d032ec3b8658dd81c593a9dfc25e/base36-0.1.1.tar.gz", hash = "sha256:6f221783c5499bd5fd4a1102054df9638d6232ff5ca850c21fd1efe5070c1a96", size = 2782, upload-time = "2014-12-07T10:20:50.808Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/25/5ed7384b92e7c35909b8e939096cc24a13d64fc4e3a16c0d4b9438c3f88c/base36-0.1.1-py2.py3-none-any.whl", hash = "sha256:15eec75cf938a2186349e6b6dfc7320c73c065921493be83808c68d909b15763", size = 3530, upload-time = "2014-12-07T10:20:47.952Z" },
-]
-
-[[package]]
 name = "beartype"
 version = "0.22.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1234,11 +1225,11 @@ name = "pymc"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "base36" },
     { name = "fastmcp" },
     { name = "imgui" },
     { name = "nbtlib" },
     { name = "numpy" },
+    { name = "pydantic" },
     { name = "pygame" },
     { name = "pyglm" },
     { name = "pyopengl" },
@@ -1247,11 +1238,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "base36", specifier = "==0.1.1" },
     { name = "fastmcp", specifier = ">=4.0.5" },
     { name = "imgui", specifier = "==2.0.0" },
     { name = "nbtlib", specifier = "==2.0.4" },
     { name = "numpy", specifier = "==2.3.5" },
+    { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pygame", specifier = "==2.6.1" },
     { name = "pyglm", specifier = "==2.8.3" },
     { name = "pyopengl", specifier = "==3.1.10" },

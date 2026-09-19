@@ -68,3 +68,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# imgui 运行时写出的窗口布局，拖一下聊天框就产生 diff
+# 已被跟踪，要真正生效需先执行：git rm --cached imgui.ini
+imgui.ini
+
+# 临时脚本与实验产物
+_*.py

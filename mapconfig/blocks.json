@@ -1,0 +1,906 @@
+{
+ "format": "pymc_block_defs",
+ "version": 1,
+ "generator": "gen_block_defs.py",
+ "saved_at": "2026-09-19T13:17:33+0800",
+ "source": "data/blocks.mcpy",
+ "note": "Shared block type definitions for pymc_scene files. Scene files reference block ids; look them up here. id 0 is air and is not listed. Texture files live in textures/<name>.png",
+ "texture_dir": "textures",
+ "face_keys": [
+  "all",
+  "sides",
+  "x",
+  "y",
+  "z",
+  "top",
+  "bottom",
+  "front",
+  "back",
+  "left",
+  "right"
+ ],
+ "block_count": 84,
+ "blocks": {
+  "1": {
+   "name": "Stone",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "stone"
+   }
+  },
+  "2": {
+   "name": "Grass",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "top": "grass",
+    "bottom": "dirt",
+    "sides": "grass_side"
+   }
+  },
+  "3": {
+   "name": "Dirt",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "dirt"
+   }
+  },
+  "4": {
+   "name": "Cobblestone",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "cobblestone"
+   }
+  },
+  "5": {
+   "name": "Planks",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "planks"
+   }
+  },
+  "6": {
+   "name": "Sapling",
+   "model": "plant",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "sapling"
+   }
+  },
+  "7": {
+   "name": "Bedrock",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "bedrock"
+   }
+  },
+  "8": {
+   "name": "Water",
+   "model": "liquid",
+   "is_cube": true,
+   "transparent": true,
+   "glass": true,
+   "textures": {
+    "all": "water"
+   }
+  },
+  "9": {
+   "name": "Stationary Water",
+   "model": "liquid",
+   "is_cube": true,
+   "transparent": true,
+   "glass": true,
+   "textures": {
+    "all": "water"
+   }
+  },
+  "10": {
+   "name": "Lava",
+   "model": "liquid",
+   "is_cube": true,
+   "transparent": true,
+   "glass": true,
+   "textures": {
+    "all": "lava"
+   }
+  },
+  "11": {
+   "name": "Stationary Lava",
+   "model": "liquid",
+   "is_cube": true,
+   "transparent": true,
+   "glass": true,
+   "textures": {
+    "all": "lava"
+   }
+  },
+  "12": {
+   "name": "Sand",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "sand"
+   }
+  },
+  "13": {
+   "name": "Gravel",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "gravel"
+   }
+  },
+  "14": {
+   "name": "Gold Ore",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "gold_ore"
+   }
+  },
+  "15": {
+   "name": "Iron Ore",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "iron_ore"
+   }
+  },
+  "16": {
+   "name": "Coal Ore",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "coal_ore"
+   }
+  },
+  "17": {
+   "name": "Log",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "y": "log_y",
+    "sides": "log_side"
+   }
+  },
+  "18": {
+   "name": "Leaves",
+   "model": "leaves",
+   "is_cube": true,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "leaves"
+   }
+  },
+  "19": {
+   "name": "Sponge",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "sponge"
+   }
+  },
+  "20": {
+   "name": "Glass",
+   "model": "glass",
+   "is_cube": true,
+   "transparent": true,
+   "glass": true,
+   "textures": {
+    "all": "glass"
+   }
+  },
+  "21": {
+   "name": "Red Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "red_cloth"
+   }
+  },
+  "22": {
+   "name": "Orange Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "orange_cloth"
+   }
+  },
+  "23": {
+   "name": "Yellow Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "yellow_cloth"
+   }
+  },
+  "24": {
+   "name": "Lime Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "lime_cloth"
+   }
+  },
+  "25": {
+   "name": "Green Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "green_cloth"
+   }
+  },
+  "26": {
+   "name": "Aqua Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "aqua_cloth"
+   }
+  },
+  "27": {
+   "name": "Cyan Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "cyan_cloth"
+   }
+  },
+  "28": {
+   "name": "Blue Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "blue_cloth"
+   }
+  },
+  "29": {
+   "name": "Purple Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "purple_cloth"
+   }
+  },
+  "30": {
+   "name": "Indigo Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "indigo_cloth"
+   }
+  },
+  "31": {
+   "name": "Violet Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "violet_cloth"
+   }
+  },
+  "32": {
+   "name": "Magenta Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "magenta_cloth"
+   }
+  },
+  "33": {
+   "name": "Pink Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "pink_cloth"
+   }
+  },
+  "34": {
+   "name": "Black Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "black_cloth"
+   }
+  },
+  "35": {
+   "name": "Grey Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "grey_cloth"
+   }
+  },
+  "36": {
+   "name": "White Cloth",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "white_cloth"
+   }
+  },
+  "37": {
+   "name": "Yellow Flower",
+   "model": "plant",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "yellow_flower"
+   }
+  },
+  "38": {
+   "name": "Red Rose",
+   "model": "plant",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "red_rose"
+   }
+  },
+  "39": {
+   "name": "Brown Mushroom",
+   "model": "plant",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "brown_mushroom"
+   }
+  },
+  "40": {
+   "name": "Red Mushroom",
+   "model": "plant",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "red_mushroom"
+   }
+  },
+  "41": {
+   "name": "Gold Block",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "gold_block"
+   }
+  },
+  "42": {
+   "name": "Iron Block",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "iron_block"
+   }
+  },
+  "43": {
+   "name": "Double Slab",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "sides": "slab_side",
+    "y": "slab_y"
+   }
+  },
+  "44": {
+   "name": "Slab",
+   "model": "slab",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "sides": "slab_side",
+    "y": "slab_y"
+   }
+  },
+  "45": {
+   "name": "Bricks",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "bricks"
+   }
+  },
+  "46": {
+   "name": "TNT",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "top": "tnt_top",
+    "bottom": "tnt_bottom",
+    "sides": "tnt_side"
+   }
+  },
+  "47": {
+   "name": "Bookshelf",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "y": "planks",
+    "sides": "bookshelf"
+   }
+  },
+  "48": {
+   "name": "Mossy Cobblestone",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "mossy_cobblestone"
+   }
+  },
+  "49": {
+   "name": "Obsidian",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "obsidian"
+   }
+  },
+  "50": {
+   "name": "Torch",
+   "model": "torch",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "top": "torch_top",
+    "bottom": "torch",
+    "sides": "torch"
+   }
+  },
+  "51": {
+   "name": "Fire",
+   "model": "fire",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "fire"
+   }
+  },
+  "52": {
+   "name": "Mob Spawner",
+   "model": "leaves",
+   "is_cube": true,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "mob_spawner"
+   }
+  },
+  "53": {
+   "name": "Wooden Stairs",
+   "model": "stairs",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "planks"
+   }
+  },
+  "54": {
+   "name": "Chest",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "y": "chest_top",
+    "sides": "chest_side",
+    "front": "chest_front"
+   }
+  },
+  "55": {
+   "name": "Redstone Wire",
+   "model": "flat",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "redstone_wire"
+   }
+  },
+  "56": {
+   "name": "Diamond Ore",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "diamond_ore"
+   }
+  },
+  "57": {
+   "name": "Diamond Block",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "diamond_block"
+   }
+  },
+  "58": {
+   "name": "Crafting Table",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "top": "crafting_table_top",
+    "bottom": "planks",
+    "x": "crafting_table_x",
+    "z": "crafting_table_z"
+   }
+  },
+  "59": {
+   "name": "Crops",
+   "model": "crop",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "crops"
+   }
+  },
+  "60": {
+   "name": "Soil",
+   "model": "soil",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "dirt",
+    "top": "soil"
+   }
+  },
+  "61": {
+   "name": "Furnace",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "y": "furnace_y",
+    "sides": "furnace_side",
+    "front": "furnace_front"
+   }
+  },
+  "62": {
+   "name": "Lit Furnace",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "y": "furnace_y",
+    "sides": "furnace_side",
+    "front": "lit_furnace_front"
+   }
+  },
+  "63": {
+   "name": "Sign Post",
+   "model": "sign_post",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "planks"
+   }
+  },
+  "64": {
+   "name": "Wooden Door",
+   "model": "door",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "wooden_door"
+   }
+  },
+  "65": {
+   "name": "Ladder",
+   "model": "ladder",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "ladder"
+   }
+  },
+  "66": {
+   "name": "Rails",
+   "model": "flat",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "rails"
+   }
+  },
+  "67": {
+   "name": "Cobblestone Stairs",
+   "model": "stairs",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "cobblestone"
+   }
+  },
+  "68": {
+   "name": "Sign",
+   "model": "sign",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "planks"
+   }
+  },
+  "69": {
+   "name": "Lever",
+   "model": "lever",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "lever"
+   }
+  },
+  "70": {
+   "name": "Stone Pressure Plate",
+   "model": "pressure_plate",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "stone"
+   }
+  },
+  "71": {
+   "name": "Iron Door",
+   "model": "door",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "iron_door_bottom_half"
+   }
+  },
+  "72": {
+   "name": "Wooden Pressure Plate",
+   "model": "pressure_plate",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "planks"
+   }
+  },
+  "73": {
+   "name": "Redstone Ore",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "redstone_ore"
+   }
+  },
+  "74": {
+   "name": "Lit Redstone Ore",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "redstone_ore"
+   }
+  },
+  "75": {
+   "name": "Redstone Torch",
+   "model": "torch",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "top": "redstone_torch_top",
+    "bottom": "redstone_torch",
+    "sides": "redstone_torch"
+   }
+  },
+  "76": {
+   "name": "Redstone Torch (Off)",
+   "model": "torch",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "top": "off_redstone_torch_top",
+    "bottom": "off_redstone_torch",
+    "sides": "off_redstone_torch"
+   }
+  },
+  "77": {
+   "name": "Stone Button",
+   "model": "button",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "stone"
+   }
+  },
+  "78": {
+   "name": "Snow",
+   "model": "snow",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "snow"
+   }
+  },
+  "79": {
+   "name": "Ice",
+   "model": "tinted_glass",
+   "is_cube": true,
+   "transparent": true,
+   "glass": true,
+   "textures": {
+    "all": "ice"
+   }
+  },
+  "80": {
+   "name": "Snow Block",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "snow"
+   }
+  },
+  "81": {
+   "name": "Cactus",
+   "model": "cactus",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "unknown",
+    "top": "cactus_top",
+    "bottom": "cactus_bottom",
+    "sides": "cactus_side"
+   }
+  },
+  "82": {
+   "name": "Clay",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "clay"
+   }
+  },
+  "83": {
+   "name": "Sugar Cane",
+   "model": "plant",
+   "is_cube": false,
+   "transparent": true,
+   "glass": false,
+   "textures": {
+    "all": "sugar_cane"
+   }
+  },
+  "84": {
+   "name": "Jukebox",
+   "model": "cube",
+   "is_cube": true,
+   "transparent": false,
+   "glass": false,
+   "textures": {
+    "all": "jukebox",
+    "top": "jukebox_top"
+   }
+  }
+ }
+}

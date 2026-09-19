@@ -547,13 +547,16 @@ class Plugin:
         self._send_json(build_response("set_blocks_region", "ok", {"count": len(blocks)}, request_id=request_id))
     
     def _handle_save_scene_json(self, params, request_id=None):
-        """把当前场景导出为 JSON 文件。
+        """把当前场景导出为文件。
 
-        params: {"path": "scene.json"}  # 可选，默认 scene.json
+        params: {"path": "..."}  # 可选，省略时用工程默认路径
         """
-        path = params.get("path", "scene.json")
+        path = params.get("path")
         try:
-            count, saved_path = self.world.save_scene_json(path)
+            if path:
+                count, saved_path = self.world.save_scene_json(path)
+            else:
+                count, saved_path = self.world.save_scene_json()
             self._send_json(build_response(
                 "save_scene_json", "ok",
                 {"path": saved_path, "block_count": count},
@@ -564,17 +567,20 @@ class Plugin:
                 "save_scene_json", "error", {"message": str(e)}, request_id=request_id))
 
     def _handle_load_scene_json(self, params, request_id=None):
-        """从 JSON 文件加载场景。
+        """从文件加载场景。
 
-        params: {"path": "scene.json", "clear": true}
+        params: {"path": "...", "clear": true}  # path 可选
         """
-        path = params.get("path", "scene.json")
+        path = params.get("path")
         clear = params.get("clear", True)
         try:
-            count = self.world.load_scene_json(path, clear)
+            if path:
+                count = self.world.load_scene_json(path, clear)
+            else:
+                count = self.world.load_scene_json(clear=clear)
             self._send_json(build_response(
                 "load_scene_json", "ok",
-                {"path": path, "block_count": count},
+                {"path": path or "<default>", "block_count": count},
                 request_id=request_id))
         except Exception as e:
             logger.error(f"load_scene_json failed: {e}")

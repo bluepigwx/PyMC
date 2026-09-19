@@ -2,7 +2,12 @@
 
 用法：
     uv run python scene_server.py
-然后启动 main.py（客户端会连 localhost:8001）。
+    然后另开一个终端启动游戏，必须用 --default：
+        uv run python main.py --default
+
+为什么要 --default：不加参数时 main.py 会自动载入 save/v1/world.json，
+而下面 clear_region() 只清 x/z ∈ [-16,15]、y ∈ [1,14] 这一小块，
+清不掉存档里的大地图，城堡会盖在旧地形上。
 """
 import socket
 import struct
@@ -394,12 +399,13 @@ def main():
 
     conn.settimeout(180)
 
+    # 省略 path，让客户端用工程默认路径（save/v1/world.json）
     tasks = [
         ("clear", "set_blocks_region", {"regions": clear_region()}),
         ("brick-castle", "set_blocks_region", {"regions": brick_castle_regions()}),
-        ("save", "save_scene_json", {"path": "scene.json"}),
+        ("save", "save_scene_json", {}),
         ("clear-again", "set_blocks_region", {"regions": clear_region()}),
-        ("load", "load_scene_json", {"path": "scene.json", "clear": True}),
+        ("load", "load_scene_json", {"clear": True}),
     ]
 
     for name, cmd, params in tasks:
@@ -407,10 +413,24 @@ def main():
         print(f"[{name}] sent {cmd}", flush=True)
         try:
             resp = recv_frame(conn)
-            print(f"[{name}] response: {resp}", flush=True)
         except Exception as e:
             print(f"[{name}] recv failed: {e}", flush=True)
             break
+
+        # 客户端可能主动发聊天帧（tcp_agent_plugin.send_chat），
+        # 只认 request_id 对得上的那一帧，其余跳过
+        while resp.get("request_id") != name:
+            print(f"[{name}] skip unrelated frame: cmd={resp.get('cmd')}", flush=True)
+            try:
+                resp = recv_frame(conn)
+            except Exception as e:
+                print(f"[{name}] recv failed: {e}", flush=True)
+                resp = None
+                break
+        if resp is None:
+            break
+
+        print(f"[{name}] response: {resp}", flush=True)
 
     # 保持连接，方便后续继续下发指令
     conn.settimeout(None)

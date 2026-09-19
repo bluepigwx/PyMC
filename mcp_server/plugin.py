@@ -50,7 +50,8 @@ MAX_BLOCKS = int(os.environ.get("PYMC_MAX_BLOCKS", "200000"))
 # 超过这么多方块就改用「先写数据、最后统一重建全部网格」的路径
 BULK_THRESHOLD = 256
 
-PROJECT_DIR = Path(__file__).resolve().parent
+# 本文件在 mcp_server/ 子目录下，工程根要往上退一层
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 
 # ----------------------------------------------------------------------
@@ -358,9 +359,11 @@ class Plugin:
                 "Build inside a running PyMC voxel world (a Minecraft-like renderer). "
                 "This server lives in the game process: if calls fail with connection errors, "
                 "the game window is closed.\n"
-                "Integer world coordinates, +X east, +Y up, +Z south. y=0 is the pre-generated "
-                "grass ground over x/z in [-16,15], so build upward from y=1. Block type ids are "
+                "Integer world coordinates, +X east, +Y up, +Z south. Block type ids are "
                 "0..84 (0 = air = remove); call list_block_types if unsure.\n"
+                "The world may be a flat default ground or a loaded save with real terrain, "
+                "so never assume where the surface is. Call get_scene_info first to read the "
+                "current bounds and camera position, then pick coordinates.\n"
                 "Prefer fill_regions over place_blocks for box shapes: it is one call and the "
                 "game batches the mesh rebuild."
             ),
@@ -465,8 +468,12 @@ class Plugin:
             z_min: int = -16,
             z_max: int = 15,
         ) -> dict:
-            """Delete every block in a box. Defaults wipe the build area above the ground,
-            keeping the y=0 grass plane."""
+            """Delete every block in a box (fills it with air).
+
+            The defaults only cover the small flat default world (x/z in [-16,15],
+            y in [1,14]). They will NOT clear a loaded save with real terrain —
+            call get_scene_info first and pass that bounding box explicitly.
+            """
             self._stats["tool_calls"] += 1
             return self._fill_regions([Region(
                 type=0,
@@ -521,18 +528,24 @@ class Plugin:
             return info
 
         @mcp.tool
-        def save_scene(path: str = "scene.json") -> dict:
-            """Save the world to a JSON file, relative to the game's working directory."""
+        def save_scene(path: str = "") -> dict:
+            """Save the world to a scene file. Empty path uses the project default."""
             self._stats["tool_calls"] += 1
-            count, saved = self._run_on_main(lambda: self.world.save_scene_json(path))
+            if path:
+                count, saved = self._run_on_main(lambda: self.world.save_scene_json(path))
+            else:
+                count, saved = self._run_on_main(lambda: self.world.save_scene_json())
             return {"path": saved, "block_count": count}
 
         @mcp.tool
-        def load_scene(path: str = "scene.json", clear: bool = True) -> dict:
-            """Load a world from a save_scene JSON file. clear=True wipes the world first."""
+        def load_scene(path: str = "", clear: bool = True) -> dict:
+            """Load a world from a scene file. Empty path uses the project default."""
             self._stats["tool_calls"] += 1
-            count = self._run_on_main(lambda: self.world.load_scene_json(path, clear))
-            return {"path": path, "block_count": count}
+            if path:
+                count = self._run_on_main(lambda: self.world.load_scene_json(path, clear))
+            else:
+                count = self._run_on_main(lambda: self.world.load_scene_json(clear=clear))
+            return {"path": path or "<default>", "block_count": count}
 
         @mcp.tool
         def reset_world() -> dict:

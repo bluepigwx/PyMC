@@ -2,13 +2,15 @@ import block_type
 import chunk
 import config
 import texture_mgr
-import random
 import models
 import math
 import map_data
+import scene_format
 import logging
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_SCENE_PATH = "save/v1/world.json"
 
 class World:
     def __init__(self):
@@ -23,18 +25,25 @@ class World:
         self.map_data = map_data.MapData(self)
         
     
-    def load_map(self):
+    def load_map(self, path=None):
+        """载入地图。
+
+        给了 path 就从场景文件读，没给就生成默认的 4 块草地。
+        """
+        if path:
+            logger.info(f"begin load scene {path} ...")
+            count = self.load_scene_json(path)
+            logger.info(f"end load scene, {count} blocks in {len(self.chunks)} chunks")
+            return count
+
         logger.info(f"begin load map data...")
-        #self.map_data.load()
         self.map_data.build_custom_chunks_v2()
         logger.info(f"end load map data...")
-        
-        #也可以自定义生成地图
-        #self._build_custom_chunks()
-        
+
         logger.info(f"begin build meshs...")
         self.build_meshs()
         logger.info(f"end build meshs...")
+        return None
         
         
     def reset_map(self):
@@ -44,14 +53,18 @@ class World:
         self.build_meshs()
 
 
-    def save_scene_json(self, path="scene.json"):
-        """把当前场景导出为 JSON 文件，返回 (方块数, 路径)。"""
-        return self.map_data.save_json(path)
+    def save_scene_json(self, path=DEFAULT_SCENE_PATH):
+        """把当前场景导出为 JSON 文件，返回 (方块数, 路径)。
+
+        格式见 mapv1.md：section + 局部调色板 + 游程编码。
+        方块类型说明不写进来，在 mapconfig/blocks.json 里。
+        """
+        return scene_format.save_world(self, path)
 
 
-    def load_scene_json(self, path="scene.json", clear=True):
+    def load_scene_json(self, path=DEFAULT_SCENE_PATH, clear=True):
         """从 JSON 文件加载场景，返回方块数。"""
-        return self.map_data.load_json(path, clear)
+        return scene_format.load_world(self, path, clear)
         
 
         
@@ -99,28 +112,6 @@ class World:
                 self.block_types.append(_block_type)
 
 
-    def _build_custom_chunks(self):
-        for x in range(2):
-            for z in range(2):
-                chunk_position = (x - 1, -1, z - 1)
-
-                new_chunk = chunk.Chunk(self, chunk_position)
-
-                for i in range(config.CHUNK_WIDHT):
-                    for j in range(config.CHUNK_HEIGHT):
-                        for k in range(config.CHUNK_LENGHTH):
-                            if j == 15:
-                                new_chunk.blocks[i][j][k] = random.choices([0, 9, 10], [20, 2, 1])[0]
-                            elif j == 14:
-                                new_chunk.blocks[i][j][k] =2
-                            elif j >10:
-                                new_chunk.blocks[i][j][k] = 4
-                            else:
-                                new_chunk.blocks[i][j][k] = 5
-
-                self.chunks[chunk_position] = new_chunk
-
-        
     def build_meshs(self):
         for _, c in self.chunks.items():
             c.update_subchunk_mesh()

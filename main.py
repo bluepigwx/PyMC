@@ -1,5 +1,6 @@
 import pygame as pg
 from OpenGL.GL import *
+import glm
 import imgui
 import config
 import shader
@@ -7,10 +8,11 @@ import camera
 import controller
 import world
 import logging
+import os
+import sys
 from gui_mgr import ChatBox, PygameCoreRenderer
-from gui_mgr.opencode_agent_plugin import OpenCodePlugin
 import tcp_agent_plugin
-import mcp_plugin
+import mcp_server
 
 logging.basicConfig(level=logging.DEBUG,
                     format="[%(asctime)s][%(filename)s:%(funcName)s:%(lineno)d][%(levelname)s][%(message)s]",
@@ -21,11 +23,12 @@ logging.basicConfig(level=logging.DEBUG,
 logger = logging.getLogger("application")
 
 class Application:
-    def __init__(self):
+    def __init__(self, scene_path=None):
         self._run = False
         self._imgui_impl = None
         self._chat_box = None
         self._mcp = None
+        self._scene_path = scene_path
 
 
     def init(self):
@@ -52,7 +55,7 @@ class Application:
         self._world = world.World()
         
         logger.info(f"try load map data...")
-        self._world.load_map()
+        self._world.load_map(self._scene_path)
         logger.info(f"try build shaders...")
         self._shader = shader.Shader("shaders/vertex_shader.vs", "shaders/fragment_shader.fs")
         self._shader.use()
@@ -66,10 +69,19 @@ class Application:
         logger.info(f"init controller...")
         self._controller = controller.Controller(self._world)
         self._controller.bind_camera(self._camera)
+
+        # 从场景文件载入时，默认出生点很可能埋在地下，挪到地表上方
+        if self._scene_path:
+            spawn = self._find_spawn()
+            self._controller._position = spawn
+            config.HOME_POS = glm.vec3(spawn)
+            logger.info(f"spawn at {tuple(round(v, 1) for v in spawn)}")
         
         logger.info(f"init plugin...")
+        # 想换成 OpenCode 网关时：
+        #   from gui_mgr.opencode_agent_plugin import OpenCodePlugin
+        #   self._plugin = OpenCodePlugin(self._world, self._controller)
         self._plugin = tcp_agent_plugin.Plugin(self._world, self._controller)
-        #self._plugin = OpenCodePlugin(self._world, self._controller)
         self._plugin.init()
         
         # 初始化聊天框并绑定回调（使用 TCP plugin）
@@ -85,10 +97,18 @@ class Application:
         self._controller.bind_chat_box(self._chat_box)
 
         logger.info(f"init mcp plugin...")
-        self._mcp = mcp_plugin.Plugin(self._world, self._controller)
+        self._mcp = mcp_server.Plugin(self._world, self._controller)
         self._mcp.init()
-        
-        
+
+
+    def _find_spawn(self, x=8, z=8):
+        """在 (x,z) 这一列从上往下找第一个非空方块，站到它上面 2 格。"""
+        for y in range(config.CHUNK_HEIGHT - 1, -1, -1):
+            if self._world.get_block_number(x, y, z) != 0:
+                return glm.vec3(x + 0.5, y + 2.5, z + 0.5)
+        return glm.vec3(config.HOME_POS)
+
+
     def run(self):
         while self._run:
             for event in pg.event.get():
@@ -198,12 +218,50 @@ class Application:
         pg.quit()
 
 
+def _parse_args(argv):
+    """解析命令行。
+
+    用法:
+        python main.py                        生成默认的平坦草地
+        python main.py <场景文件>              载入指定场景
+        python main.py --scene <场景文件>      同上
+        python main.py --default              强制用默认草地
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(description="PyMC")
+    parser.add_argument("scene", nargs="?", default=None,
+                        help=f"场景文件路径，省略时若 {world.DEFAULT_SCENE_PATH} 存在则自动载入")
+    parser.add_argument("--scene", dest="scene_opt", default=None,
+                        help="同位置参数 scene")
+    parser.add_argument("--default", action="store_true",
+                        help="忽略场景文件，生成默认平坦草地")
+    args = parser.parse_args(argv)
+
+    if args.default:
+        return None
+
+    path = args.scene_opt or args.scene
+    if path:
+        return path
+
+    # 都没给：默认场景文件存在就用它
+    if os.path.exists(world.DEFAULT_SCENE_PATH):
+        return world.DEFAULT_SCENE_PATH
+    return None
+
+
 if __name__ == "__main__":
+    scene_path = _parse_args(sys.argv[1:])
+
     app = None
     try:
-        app = Application()
+        app = Application(scene_path=scene_path)
 
         app.init()
+
+        if scene_path:
+            pg.display.set_caption(f"PyMC - {scene_path}")
 
         app.run()
     except Exception:
