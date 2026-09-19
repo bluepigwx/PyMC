@@ -14,7 +14,9 @@ class Controller:
     处理外部输入
     """
     def __init__(self, world):
-        self._position = config.HOME_POS
+        # 必须拷贝：glm.vec3 的 += 是就地修改，
+        # 直接引用 config.HOME_POS 会让移动把这个模块级常量改掉，H 键从此回不了家
+        self._position = glm.vec3(config.HOME_POS)
         self._right = glm.vec3(1, 0, 0)
         self._up = glm.vec3(0, 1, 0)
         self._forward = glm.vec3(0, 0, -1)
@@ -24,6 +26,8 @@ class Controller:
         
         self._world = world
         self._chat_box = None
+        self._camera = None
+        self._plugin = None
         self._hud = HUD()
         
         self.holding = 1 # 代表手里拿的哪个方块
@@ -159,9 +163,9 @@ class Controller:
             pg.mouse.set_visible(not self.mouse_grabbed)
             
         if key == pg.K_h:
-            self._position = config.HOME_POS
+            self._position = glm.vec3(config.HOME_POS)
         if key == pg.K_j:
-            if self._plugin:
+            if self._plugin and hasattr(self._plugin, "_handle_get_scene_info"):
                 self._plugin._handle_get_scene_info({})
         if key == pg.K_r:
             self._world.reset_map()

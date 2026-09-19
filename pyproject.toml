@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "base36==0.1.1",
+    "fastmcp>=4.0.5",
     "imgui==2.0.0",
     "nbtlib==2.0.4",
     "numpy==2.3.5",
@@ -13,5 +14,4 @@ dependencies = [
     "pyglm==2.8.3",
     "pyopengl==3.1.10",
     "requests>=2.31.0",
-    "websocket-client>=1.6.0",
 ]

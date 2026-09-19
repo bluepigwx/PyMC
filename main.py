@@ -10,6 +10,7 @@ import logging
 from gui_mgr import ChatBox, PygameCoreRenderer
 from gui_mgr.opencode_agent_plugin import OpenCodePlugin
 import tcp_agent_plugin
+import mcp_plugin
 
 logging.basicConfig(level=logging.DEBUG,
                     format="[%(asctime)s][%(filename)s:%(funcName)s:%(lineno)d][%(levelname)s][%(message)s]",
@@ -24,6 +25,7 @@ class Application:
         self._run = False
         self._imgui_impl = None
         self._chat_box = None
+        self._mcp = None
 
 
     def init(self):
@@ -81,6 +83,10 @@ class Application:
         
         self._controller.bind_plugin(self._plugin)
         self._controller.bind_chat_box(self._chat_box)
+
+        logger.info(f"init mcp plugin...")
+        self._mcp = mcp_plugin.Plugin(self._world, self._controller)
+        self._mcp.init()
         
         
     def run(self):
@@ -118,7 +124,10 @@ class Application:
 
     def _update(self, delta):
         self._plugin.update()
-        
+
+        if self._mcp:
+            self._mcp.update()
+
         self._controller.update(delta)
 
 
@@ -177,6 +186,9 @@ class Application:
 
 
     def exit(self):
+        if self._mcp:
+            self._mcp.finit()
+
         if self._plugin:
             self._plugin.finit()
 
@@ -187,13 +199,18 @@ class Application:
 
 
 if __name__ == "__main__":
+    app = None
     try:
         app = Application()
 
         app.init()
 
         app.run()
-
-        app.exit()
-    except Exception as e:
-        logger.error(f"{e}")
+    except Exception:
+        logger.exception("application crashed")
+    finally:
+        if app:
+            try:
+                app.exit()
+            except Exception:
+                logger.exception("error during exit")

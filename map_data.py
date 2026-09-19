@@ -5,6 +5,7 @@ import base36
 import logging
 import copy
 import json
+import math
 import os
 import time
 
@@ -248,6 +249,17 @@ class MapData:
 
     def _put_block_raw(self, wposition, block_id):
         """直接写入方块数据，不做逐块的网格更新（批量导入用）。"""
+        # 同 world.set_block：非法 id 写进去会让后面的 build_meshs 永久崩溃
+        block_id = int(block_id)
+        if block_id < 0 or block_id >= len(self.world.block_types):
+            raise ValueError(
+                f"invalid block id {block_id}, valid range 0..{len(self.world.block_types) - 1}"
+            )
+        if block_id != 0 and self.world.block_types[block_id] is None:
+            raise ValueError(f"block id {block_id} is not defined in data/blocks.mcpy")
+
+        wposition = (math.floor(wposition[0]), math.floor(wposition[1]), math.floor(wposition[2]))
+
         chunk_position = self.world.get_chunk_position(wposition)
         if chunk_position not in self.world.chunks:
             if block_id == 0:

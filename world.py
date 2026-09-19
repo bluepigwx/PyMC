@@ -223,8 +223,24 @@ class World:
         外部修改block的接口
         """
         logger.debug(f"wposition : {wposition} block_num : {block_num}")
-        wx, wy, wz = wposition
-        
+
+        # 坐标取整：blocks 是三层 python list，浮点下标会 TypeError
+        wx = math.floor(wposition[0])
+        wy = math.floor(wposition[1])
+        wz = math.floor(wposition[2])
+        wposition = (wx, wy, wz)
+
+        # 必须在写入前校验。一旦把非法 id 写进 blocks 数组，
+        # 之后每次 update_mesh / build_meshs 取 block_types[id] 都会 IndexError，
+        # 整个世界从此再也重建不了网格。
+        block_num = int(block_num)
+        if block_num < 0 or block_num >= len(self.block_types):
+            raise ValueError(
+                f"invalid block id {block_num}, valid range 0..{len(self.block_types) - 1}"
+            )
+        if block_num != 0 and self.block_types[block_num] is None:
+            raise ValueError(f"block id {block_num} is not defined in data/blocks.mcpy")
+
         chunk_position = self.get_chunk_position(wposition)
         if chunk_position not in self.chunks:
             if block_num == 0:

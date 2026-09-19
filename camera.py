@@ -3,6 +3,7 @@ import config
 
 class Camera:
     def __init__(self):
+        self._shader = None
         aspect_ratio = config.WINDOW_RES[0] / config.WINDOW_RES[1]
         self._proj_mat = glm.perspective(config.V_FOV, aspect_ratio, config.NEAR_CULL, config.FAR_CULL)
 

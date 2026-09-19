@@ -12,7 +12,11 @@ class BlockType:
     """
     方块的蓝图定义类
     """
-    def __init__(self, texture_mgr, name="unknow", block_face_textures={"all":"cobblestone"}, model=models.cube):
+    def __init__(self, texture_mgr, name="unknow", block_face_textures=None, model=models.cube):
+        # 默认值不能直接写 dict 字面量：函数默认参数只求值一次，
+        # 所有没传该参数的 BlockType 会共用同一个 dict 对象
+        if block_face_textures is None:
+            block_face_textures = {"all": "cobblestone"}
         self.name = name
         self.vertices = model.vertex_positions
         self.texcoord = model.tex_coords.copy()
