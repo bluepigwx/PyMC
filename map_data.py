@@ -34,6 +34,9 @@ class MapData:
 
 
     def reset_map_data(self):
+        # 丢弃前先释放 GL 缓冲，否则句柄在驱动侧泄漏
+        for c in self.world.chunks.values():
+            c.dispose()
         self.world.chunks = {}
         self.build_custom_chunks_v2()
 
@@ -44,13 +47,7 @@ class MapData:
         调用方需要自己在批量写完后调 world.build_meshs()。
         """
         # 同 world.set_block：非法 id 写进去会让后面的 build_meshs 永久崩溃
-        block_id = int(block_id)
-        if block_id < 0 or block_id >= len(self.world.block_types):
-            raise ValueError(
-                f"invalid block id {block_id}, valid range 0..{len(self.world.block_types) - 1}"
-            )
-        if block_id != 0 and self.world.block_types[block_id] is None:
-            raise ValueError(f"block id {block_id} is not defined in data/blocks.mcpy")
+        block_id = self.world.validate_block_id(block_id)
 
         wposition = (math.floor(wposition[0]), math.floor(wposition[1]), math.floor(wposition[2]))
 

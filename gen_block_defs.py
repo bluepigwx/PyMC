@@ -1,8 +1,8 @@
-"""从 data/blocks.mcpy 生成独立的方块定义文件 mapconfig/blocks.json。
+"""从 mapconfig/blocks.mcpy 生成独立的方块定义文件 mapconfig/blocks.json。
 
 场景文件不内嵌方块类型说明，改为引用这份共享定义。
-这份文件的内容只依赖 data/blocks.mcpy 和 models/，跟具体场景无关。
-改了 data/blocks.mcpy 之后要重跑一次。
+这份文件的内容只依赖 mapconfig/blocks.mcpy 和 models/，跟具体场景无关。
+改了 mapconfig/blocks.mcpy 之后要重跑一次。
 
 用法:
     uv run python gen_block_defs.py
@@ -19,7 +19,7 @@ import time
 
 import models
 
-SRC = os.path.join("data", "blocks.mcpy")
+SRC = os.path.join("mapconfig", "blocks.mcpy")
 OUT = os.path.join("mapconfig", "blocks.json")
 
 DEFS_NAME = "pymc_block_defs"
@@ -33,7 +33,7 @@ _TEX = re.compile(r"texture\.(\w+)\s+(\S+?)(?:,|$)")
 
 
 def parse_blocks_mcpy(path=SRC):
-    """解析 data/blocks.mcpy，返回 {id: 定义字典}。
+    """解析 mapconfig/blocks.mcpy，返回 {id: 定义字典}。
 
     解析规则与 world.World._load_block_type 保持一致：
       - 默认 name="Unknown"、model=models.cube、textures={"all": "unknown"}

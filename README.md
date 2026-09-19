@@ -107,7 +107,7 @@ x/z ∈ [-16,15] 这一小块，城堡会盖在旧地形上。
 相比逐个方块写 `[x,y,z,id]`，110 万方块的存档从 15 MB 降到 0.6 MB。
 
 方块的名字、贴图、几何模型不写进场景文件，统一放在 `mapconfig/blocks.json`。
-改了 `data/blocks.mcpy` 之后要重新生成一次：
+改了 `mapconfig/blocks.mcpy` 之后要重新生成一次：
 
 ```bash
 uv run python gen_block_defs.py
@@ -122,11 +122,10 @@ chunk.py             16×128×16 的区块，负责网格构建与上传 GPU
 subchunk.py          4×4×4 子区块，面剔除在这里
 block_type.py        方块蓝图，把贴图绑到几何面上
 models/              22 种方块几何模型，纯数据
-data/blocks.mcpy     84 种方块的定义源文件
-mapconfig/           由 blocks.mcpy 生成的共享方块定义
+mapconfig/blocks.mcpy    84 种方块的定义源文件
+mapconfig/blocks.json    由 blocks.mcpy 生成的共享方块定义
 scene_format.py      场景格式编解码
 map_data.py          默认地形生成
-save/                旧的 Minecraft Alpha NBT 存档（只读）
 save/v1/             新格式场景
 camera.py shader.py texture_mgr.py hit.py    渲染与拾取
 controller.py        键鼠输入

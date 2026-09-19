@@ -797,18 +797,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nbtlib"
-version = "2.0.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/61/b1/4ed5ac509bad0ed70631f3f3edcbbfd8b6879c919763ed1b3cff11e6ff43/nbtlib-2.0.4.tar.gz", hash = "sha256:d4b861047fb9beb546a2e3f3b776dc61b0fb5831375752a39961882e2f76cc93", size = 29384, upload-time = "2021-11-25T01:06:29.338Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/10/5669f4e5fa24706fa44b2e28e4362429665a8d26f3c18eda7233f1a01772/nbtlib-2.0.4-py3-none-any.whl", hash = "sha256:38d571fbf2f7ebd640639461b47fc79919a8ea8e74633ffcc8aa6b2acfc9c889", size = 28699, upload-time = "2021-11-25T01:06:27.679Z" },
-]
-
-[[package]]
 name = "numpy"
 version = "2.3.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1227,7 +1215,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "fastmcp" },
     { name = "imgui" },
-    { name = "nbtlib" },
     { name = "numpy" },
     { name = "pydantic" },
     { name = "pygame" },
@@ -1240,7 +1227,6 @@ dependencies = [
 requires-dist = [
     { name = "fastmcp", specifier = ">=4.0.5" },
     { name = "imgui", specifier = "==2.0.0" },
-    { name = "nbtlib", specifier = "==2.0.4" },
     { name = "numpy", specifier = "==2.3.5" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pygame", specifier = "==2.6.1" },

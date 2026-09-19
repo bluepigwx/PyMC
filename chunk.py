@@ -141,12 +141,18 @@ class Chunk:
             try_update_subchunk_mesh((sx, sy, sz - 1))
 
     
+    def dispose(self):
+        """释放 GL 缓冲。丢弃 chunk 前必须调用，否则句柄在驱动侧泄漏。"""
+        glDeleteBuffers(4, [self._vertex_vbo, self._tex_coord_vbo,
+                            self._shading_vbo, self._indicat_vbo])
+        glDeleteVertexArrays(1, [self._vao])
+
     def draw(self):
         if len(self._mesh_indicates) == 0:
             return
-        
+
         #glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-        
+
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, len(self._mesh_indicates), GL_UNSIGNED_INT, None)
         

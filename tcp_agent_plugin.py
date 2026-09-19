@@ -220,16 +220,21 @@ class Plugin:
 
         Args:
             text: 用户输入文本。
+
+        Returns:
+            True 已发出，False 未连接或发送失败（调用方据此允许用户重发）。
         """
         if not self.socket:
             logger.warning("cannot send chat: not connected")
-            return
+            return False
 
         try:
             self._send_json(build_request("stream", {"message": text}))
             logger.info(f"send message {text}")
+            return True
         except Exception as e:
             logger.error(f"send chat error: {e}")
+            return False
 
     # ------------------------------------------------------------------
     # 接收消息处理器
@@ -483,23 +488,31 @@ class Plugin:
         camerainfo["forward"] = list(self.controller._forward)
         camerainfo["up"] = list(self.controller._up)
         camerainfo["right"] = list(self.controller._right)
-        
-        scene_info["blocks"] = self.world.get_all_blocks()
-        
+
+        # 大世界全量方块会超过 16 MB 帧上限，截断并标记
+        MAX_BLOCKS = 50000
+        blocks = self.world.get_all_blocks()
+        scene_info["blocks"] = blocks[:MAX_BLOCKS]
+        scene_info["blocks_truncated"] = len(blocks) > MAX_BLOCKS
+
         self._send_json(build_response("get_scene_info", "ok", {"scene_info": scene_info}, request_id=request_id))
     
     def _handle_set_blocks(self, params, request_id=None):
         logger.info(f"_handle_set_blocks params: {params}")
-        
+
+        # 先全部校验再动手写：中途抛异常会留下写了一半的世界，
+        # 而服务端已经收到了报错，重试就会建两遍
+        blocks = []
         for block in params["blocks"]:
-            block_type = block["type"]
+            block_type = self.world.validate_block_id(block["type"])
             wx = math.floor(block["wx"])
             wy = math.floor(block["wy"])
             wz = math.floor(block["wz"])
-            
-            self.world.set_block((wx, wy, wz), block_type)
-            
-        self._send_json(build_response("set_blocks", "ok", {"count": len(params.get("blocks", []))}, request_id=request_id))
+            blocks.append((block_type, wx, wy, wz))
+
+        self.world.write_blocks(blocks)
+
+        self._send_json(build_response("set_blocks", "ok", {"count": len(blocks)}, request_id=request_id))
 
     def _expand_regions(self, regions):
         """将区域定义展开为 (type, wx, wy, wz) 元组的扁平列表。"""
@@ -541,8 +554,11 @@ class Plugin:
         blocks = self._expand_regions(regions)
         logger.info(f"set_blocks_region: {len(regions)} regions -> {len(blocks)} blocks")
 
-        for block_type, wx, wy, wz in blocks:
-            self.world.set_block((wx, wy, wz), block_type)
+        # 先全部校验再动手写，理由同 _handle_set_blocks
+        for block_type in {b[0] for b in blocks}:
+            self.world.validate_block_id(block_type)
+
+        self.world.write_blocks(blocks)
 
         self._send_json(build_response("set_blocks_region", "ok", {"count": len(blocks)}, request_id=request_id))
     
@@ -632,5 +648,14 @@ class Plugin:
                     handler(cmd_params)
             except Exception as e:
                 logger.error(f"handle cmd error [{cmd_type}]: {e}")
+                # 带 request_id 的请求必须回错误响应，
+                # 否则服务端收不到任何帧，干等到超时
+                if request_id is not None:
+                    try:
+                        self._send_json(build_response(
+                            cmd_type, "error", {"message": str(e)},
+                            request_id=request_id))
+                    except Exception as send_err:
+                        logger.error(f"failed to send error response: {send_err}")
         else:
             logger.warning(f"unknown command: {cmd_type}")

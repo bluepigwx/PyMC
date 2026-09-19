@@ -44,6 +44,11 @@ class TextureMgr:
         惰性加载
         """
         if texture not in self._textures:
+            # 层数写超了 glTexSubImage3D 只会产生静默 GL 错误，这里直接拦住
+            if len(self._textures) >= self._max_texture:
+                raise Exception(
+                    f"texture array full ({self._max_texture} layers), cannot add {texture}"
+                )
             image_surface = pg.image.load(f"textures/{texture}.png")
             width = image_surface.get_width()
             height = image_surface.get_height()

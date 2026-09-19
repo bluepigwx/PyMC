@@ -10,7 +10,7 @@
     YZX      展开顺序，先变 x，x 走完换 z，z 走完换 y
 
 方块类型说明（名字、贴图、模型）不写进场景文件，统一放在
-mapconfig/blocks.json 里，由 gen_block_defs.py 从 data/blocks.mcpy 生成。
+mapconfig/blocks.json 里，由 gen_block_defs.py 从 mapconfig/blocks.mcpy 生成。
 场景文件只存方块 id，用 block_defs 字段指向那份共享定义。
 
 本模块不依赖 OpenGL，可脱离游戏进程单独使用。
@@ -179,7 +179,7 @@ def encode(blocks, generator="PyMC", block_defs=BLOCK_DEFS_PATH):
         "coordinate_system": {
             "axes": "right-handed, +X east, +Y up, +Z south",
             "unit": "1 block = 1 unit cube",
-            "block_origin": "integer world coordinate of the block's min corner",
+            "block_origin": "integer world coordinate of the block's center",
         },
         "block_defs": block_defs,
         "section_size": SECTION_SIZE,
@@ -274,7 +274,7 @@ def load_file(path):
 def load_block_defs(path=BLOCK_DEFS_PATH):
     """读取 mapconfig/blocks.json，返回 {block_id: 定义字典}。
 
-    这份文件由 gen_block_defs.py 从 data/blocks.mcpy 生成，内容与场景无关。
+    这份文件由 gen_block_defs.py 从 mapconfig/blocks.mcpy 生成，内容与场景无关。
     """
     with open(path, "r", encoding="utf-8") as f:
         doc = json.load(f)
@@ -337,7 +337,7 @@ def palette_from_world(world):
 def check_block_defs(world, path=BLOCK_DEFS_PATH):
     """比对运行中的 world 与 mapconfig/blocks.json，返回不一致的方块 id 列表。
 
-    两边都源自 data/blocks.mcpy，不一致说明 blocks.mcpy 改过之后
+    两边都源自 mapconfig/blocks.mcpy，不一致说明 blocks.mcpy 改过之后
     忘了重跑 gen_block_defs.py。
     """
     if not os.path.exists(path):
@@ -403,6 +403,9 @@ def load_world(world, path, clear=True):
     _check_header(doc)
 
     if clear:
+        # 丢弃前先释放 GL 缓冲，否则句柄在驱动侧泄漏
+        for c in world.chunks.values():
+            c.dispose()
         world.chunks = {}
 
     # 一个 chunk 在 y 方向装得下几个 section
@@ -434,10 +437,12 @@ def load_world(world, path, clear=True):
                     v = flat[i]
                     i += 1
                     if v:
-                        if v > max_id or world.block_types[v] is None:
+                        # 负数也要拦：block_types[-1] 是负索引，
+                        # 会拿到列表末尾元素而不是报错
+                        if v < 0 or v > max_id or world.block_types[v] is None:
                             raise ValueError(
                                 f"block id {v} in section {key} is not defined "
-                                f"in data/blocks.mcpy"
+                                f"in mapconfig/blocks.mcpy"
                             )
                         cells[lx][wy][lz] = v
                         count += 1
@@ -449,63 +454,3 @@ def load_world(world, path, clear=True):
         raise ValueError(f"block_count says {declared} but loaded {count}")
 
     return count
-
-
-# ----------------------------------------------------------------------
-# 读取旧的 NBT chunk 目录
-#
-# 游戏运行时不走这条路径。保留它是因为 save/ 下还躺着 64 个 Minecraft Alpha
-# 风格的 .dat（已经转成 save/v1/world.json，但原文件没删）。
-# 哪天把那些 .dat 删掉，这两个函数和 pyproject 里的 nbtlib 就能一起去掉。
-# ----------------------------------------------------------------------
-
-
-def load_legacy_chunk(path):
-    """读一个 Minecraft Alpha 风格的 .dat chunk，返回 {(wx,wy,wz): id}。
-
-    NBT 里 Blocks 是 32768 字节的稠密数组，索引公式：
-        index = x * 128 * 16 + z * 128 + y
-    chunk 的世界位置由 Level.xPos / Level.zPos 给出（单位是 chunk）。
-
-    注意：这里刻意不用 `with nb.load(path) as f:`。nbtlib 的 File 作为上下文
-    管理器时，退出会把内容写回磁盘——即使一个字节都没改，也会重新 gzip 一遍，
-    把原文件覆盖掉。只读场景必须直接调用 nb.load 而不进 with。
-    """
-    import nbtlib as nb
-
-    CW, CH, CL = 16, 128, 16
-
-    f = nb.load(path)
-    level = f["Level"]
-    raw = level["Blocks"]
-    cx = int(level["xPos"])
-    cz = int(level["zPos"])
-
-    blocks = {}
-    ox = cx * CW
-    oz = cz * CL
-    for x in range(CW):
-        for z in range(CL):
-            base = x * CL * CH + z * CH
-            for y in range(CH):
-                v = int(raw[base + y])
-                if v:
-                    blocks[(ox + x, y, oz + z)] = v
-
-    return blocks
-
-
-def load_legacy_dir(root="save"):
-    """扫描目录下所有 .dat，合并成一个方块字典，返回 (blocks, 文件列表)。
-
-    转存成新格式：
-        blocks, _ = load_legacy_dir("save")
-        save_file(blocks, "save/v1/world.json")
-    """
-    import glob
-
-    blocks = {}
-    files = sorted(glob.glob(os.path.join(root, "**", "*.dat"), recursive=True))
-    for p in files:
-        blocks.update(load_legacy_chunk(p))
-    return blocks, files

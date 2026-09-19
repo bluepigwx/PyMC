@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_SCENE_PATH = "save/v1/world.json"
 
+# 超过这么多方块就改用「先写数据、最后统一重建全部网格」的路径
+BULK_THRESHOLD = 256
+
 class World:
     def __init__(self):
         self.texture_mgr = texture_mgr.TextureMgr(16, 16, 256)
@@ -70,7 +73,7 @@ class World:
         
     def _load_block_type(self):
         # parse block type data file
-        blocks_data_file = open("data/blocks.mcpy")
+        blocks_data_file = open("mapconfig/blocks.mcpy")
         blocks_data = blocks_data_file.readlines()
         blocks_data_file.close()
 
@@ -109,6 +112,9 @@ class World:
             if number < len(self.block_types):
                 self.block_types[number] = _block_type
             else:
+                # blocks.mcpy 中间缺 id 时用 None 补齐，否则后续 id 全部错位
+                while len(self.block_types) < number:
+                    self.block_types.append(None)
                 self.block_types.append(_block_type)
 
 
@@ -209,6 +215,74 @@ class World:
         return blocks
     
     
+    def validate_block_id(self, block_num):
+        """校验方块 id 合法性，返回规整后的 int id，非法则抛 ValueError。
+
+        必须在写入前校验。一旦把非法 id 写进 blocks 数组，
+        之后每次 update_mesh / build_meshs 取 block_types[id] 都会 IndexError，
+        整个世界从此再也重建不了网格。
+        """
+        block_num = int(block_num)
+        if block_num < 0 or block_num >= len(self.block_types):
+            raise ValueError(
+                f"invalid block id {block_num}, valid range 0..{len(self.block_types) - 1}"
+            )
+        if block_num != 0 and self.block_types[block_num] is None:
+            raise ValueError(f"block id {block_num} is not defined in mapconfig/blocks.mcpy")
+        return block_num
+
+    def write_blocks(self, blocks):
+        """批量写入 [(type, x, y, z), ...]，返回写入数量。
+
+        少量方块逐个走 set_block（它自己会刷新所在 chunk 及邻居的网格）。
+        量大时改走 map_data._put_block_raw 只写 blocks 数组，最后一次
+        build_meshs() 统一重建——省掉每块一次 glBufferData。
+        """
+        if len(blocks) < BULK_THRESHOLD:
+            for block_type, x, y, z in blocks:
+                self.set_block((x, y, z), block_type)
+        else:
+            put_raw = self.map_data._put_block_raw
+            for block_type, x, y, z in blocks:
+                put_raw((x, y, z), block_type)
+            self.build_meshs()
+        return len(blocks)
+
+    def block_stats(self):
+        """统计所有非空气方块，返回 (总数, {id: 数量}, bounds)。
+
+        不构造逐块 dict，供 get_scene_info 这类只读统计用，
+        大世界下比 get_all_blocks 省一大块内存。
+        """
+        counts = {}
+        total = 0
+        lo = [None, None, None]
+        hi = [None, None, None]
+        for (cx, cy, cz), c in self.chunks.items():
+            ox = cx * config.CHUNK_WIDHT
+            oy = cy * config.CHUNK_HEIGHT
+            oz = cz * config.CHUNK_LENGHTH
+            for x in range(config.CHUNK_WIDHT):
+                col = c.blocks[x]
+                wx = ox + x
+                for y in range(config.CHUNK_HEIGHT):
+                    row = col[y]
+                    wy = oy + y
+                    for z in range(config.CHUNK_LENGHTH):
+                        v = row[z]
+                        if not v:
+                            continue
+                        counts[v] = counts.get(v, 0) + 1
+                        total += 1
+                        wz = oz + z
+                        for i, w in enumerate((wx, wy, wz)):
+                            if lo[i] is None or w < lo[i]:
+                                lo[i] = w
+                            if hi[i] is None or w > hi[i]:
+                                hi[i] = w
+        bounds = {"min": lo, "max": hi} if total else None
+        return total, counts, bounds
+
     def set_block(self, wposition, block_num):
         """
         外部修改block的接口
@@ -221,16 +295,7 @@ class World:
         wz = math.floor(wposition[2])
         wposition = (wx, wy, wz)
 
-        # 必须在写入前校验。一旦把非法 id 写进 blocks 数组，
-        # 之后每次 update_mesh / build_meshs 取 block_types[id] 都会 IndexError，
-        # 整个世界从此再也重建不了网格。
-        block_num = int(block_num)
-        if block_num < 0 or block_num >= len(self.block_types):
-            raise ValueError(
-                f"invalid block id {block_num}, valid range 0..{len(self.block_types) - 1}"
-            )
-        if block_num != 0 and self.block_types[block_num] is None:
-            raise ValueError(f"block id {block_num} is not defined in data/blocks.mcpy")
+        block_num = self.validate_block_id(block_num)
 
         chunk_position = self.get_chunk_position(wposition)
         if chunk_position not in self.chunks:

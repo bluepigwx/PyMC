@@ -170,6 +170,8 @@ class OpenCodePlugin:
             return
 
         logger.info("SSE event stream connected")
+        # SSE 重连成功后恢复连接标记，否则 POST 通道会一直拒绝发送
+        self._connected = True
 
         # 解析 SSE 格式："data: {...}\n\n"
         data_buffer = []
@@ -417,7 +419,7 @@ class OpenCodePlugin:
                     "type": "error",
                     "text": "[Not connected to OpenCode server]",
                 })
-            return
+            return False
 
         logger.info(f"send message: {text[:200]}")
 
@@ -429,6 +431,7 @@ class OpenCodePlugin:
             name="opencode-post",
         )
         self._post_thread.start()
+        return True
 
     # ------------------------------------------------------------------
     # POST 消息（后台线程）

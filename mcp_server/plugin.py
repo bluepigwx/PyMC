@@ -31,7 +31,7 @@ import logging
 import os
 import re
 import threading
-from collections import Counter, deque
+from collections import deque
 from pathlib import Path
 from typing import Any, Callable
 
@@ -46,9 +46,6 @@ MCP_HOST = os.environ.get("PYMC_MCP_HOST", "127.0.0.1")
 MCP_PORT = int(os.environ.get("PYMC_MCP_PORT", "8765"))
 JOB_TIMEOUT = float(os.environ.get("PYMC_JOB_TIMEOUT", "120"))
 MAX_BLOCKS = int(os.environ.get("PYMC_MAX_BLOCKS", "200000"))
-
-# 超过这么多方块就改用「先写数据、最后统一重建全部网格」的路径
-BULK_THRESHOLD = 256
 
 # 本文件在 mcp_server/ 子目录下，工程根要往上退一层
 PROJECT_DIR = Path(__file__).resolve().parent.parent
@@ -65,9 +62,9 @@ _MODEL_RE = re.compile(r"model\s+models\.(\w+)")
 
 
 def _load_block_types():
-    """从 data/blocks.mcpy 读出 {id: {"name":..., "model":...}}，只用于给 Agent 看。"""
+    """从 mapconfig/blocks.mcpy 读出 {id: {"name":..., "model":...}}，只用于给 Agent 看。"""
     table = {0: {"name": "Air", "model": "-"}}
-    path = PROJECT_DIR / "data" / "blocks.mcpy"
+    path = PROJECT_DIR / "mapconfig" / "blocks.mcpy"
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError as e:
@@ -313,21 +310,11 @@ class Plugin:
     def _write_blocks(self, blocks) -> int:
         """blocks 是 [(type, x, y, z), ...]，必须在主线程调用。
 
-        少量方块逐个走 world.set_block（它自己会刷新所在 chunk 及邻居的网格）。
-        量大时改走 map_data._put_block_raw 只写 blocks 数组，最后一次
-        world.build_meshs() 统一重建——省掉每块一次 glBufferData。
+        少量/大量两条写入路径的实现在 world.write_blocks。
         """
-        if len(blocks) < BULK_THRESHOLD:
-            for block_type, x, y, z in blocks:
-                self.world.set_block((x, y, z), block_type)
-        else:
-            put_raw = self.world.map_data._put_block_raw
-            for block_type, x, y, z in blocks:
-                put_raw((x, y, z), block_type)
-            self.world.build_meshs()
-
-        self._stats["blocks_written"] += len(blocks)
-        return len(blocks)
+        written = self.world.write_blocks(blocks)
+        self._stats["blocks_written"] += written
+        return written
 
     def _fill_regions(self, regions: list[Region]) -> dict:
         if not regions:
@@ -492,39 +479,32 @@ class Plugin:
             self._stats["tool_calls"] += 1
 
             def job():
-                return {
-                    "camera": {
-                        "pos": [round(v, 2) for v in self.controller._position],
-                        "forward": [round(v, 2) for v in self.controller._forward],
-                        "up": [round(v, 2) for v in self.controller._up],
-                        "right": [round(v, 2) for v in self.controller._right],
-                    },
-                    "blocks": self.world.get_all_blocks(),
+                camera = {
+                    "pos": [round(v, 2) for v in self.controller._position],
+                    "forward": [round(v, 2) for v in self.controller._forward],
+                    "up": [round(v, 2) for v in self.controller._up],
+                    "right": [round(v, 2) for v in self.controller._right],
                 }
+                # block_stats 只统计不构造逐块 dict；
+                # 逐块列表只有显式要的时候才构造，且带 max_blocks 截断
+                total, counts, bounds = self.world.block_stats()
+                blocks = self.world.get_all_blocks()[:max_blocks] if include_blocks else None
+                return camera, total, counts, bounds, blocks
 
-            scene = self._run_on_main(job)
-            blocks = scene["blocks"]
-
-            counts = Counter(b["type"] for b in blocks)
-            bounds = None
-            if blocks:
-                xs = [b["pos"][0] for b in blocks]
-                ys = [b["pos"][1] for b in blocks]
-                zs = [b["pos"][2] for b in blocks]
-                bounds = {"min": [min(xs), min(ys), min(zs)], "max": [max(xs), max(ys), max(zs)]}
+            camera, total, counts, bounds, blocks = self._run_on_main(job)
 
             info = {
-                "camera": scene["camera"],
-                "block_count": len(blocks),
+                "camera": camera,
+                "block_count": total,
                 "bounds": bounds,
                 "by_type": [
                     {"id": bid, "name": BLOCK_TYPES.get(bid, {}).get("name", "Unknown"), "count": n}
-                    for bid, n in counts.most_common()
+                    for bid, n in sorted(counts.items(), key=lambda kv: -kv[1])
                 ],
             }
             if include_blocks:
-                info["blocks"] = blocks[:max_blocks]
-                info["blocks_truncated"] = len(blocks) > max_blocks
+                info["blocks"] = blocks
+                info["blocks_truncated"] = total > len(blocks)
             return info
 
         @mcp.tool
@@ -566,3 +546,4 @@ class Plugin:
 
     def send_chat(self, text):
         logger.info(f"mcp plugin has no chat channel, ignoring: {text[:80]}")
+        return False

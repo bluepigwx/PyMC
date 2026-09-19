@@ -145,12 +145,16 @@ class ChatBox:
         # 防止连续帧重复发送同一条消息
         if text == self._last_sent:
             return
-        self._last_sent = text
 
         logger.info(f"send chat: {text[:200]}")
         self._chat_history.append(("user", text))
         try:
-            self._agent_plugin.send_chat(text)
+            sent = self._agent_plugin.send_chat(text)
         except Exception as e:
             logger.error(f"failed to send chat: {e}")
+            sent = False
+        if sent is False:
+            # 发送失败不记 _last_sent，允许用户重发同一条消息
             self._chat_history.append(("agent", "[发送失败，请检查连接]"))
+            return
+        self._last_sent = text
